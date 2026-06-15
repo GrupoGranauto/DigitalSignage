@@ -49,13 +49,32 @@ let bqClient = null;
 function getBigQueryClient() {
   if (bqClient) return bqClient;
 
-  if (!fs.existsSync(KEY_FILE)) {
-    console.error(`\n[ERROR] No se encontró: ${KEY_FILE}`);
-    console.error('  → Coloca tu archivo JSON de Service Account y renómbralo a service-account.json\n');
+  let options = { projectId: GCP_PROJECT };
+
+  if (process.env.GCP_CREDENTIALS_JSON) {
+    try {
+      let rawJson = process.env.GCP_CREDENTIALS_JSON;
+      // Si el JSON viene con barras invertidas (ej. "{\"type\"..."), quitar escapes si es necesario
+      if (rawJson.startsWith('"') || rawJson.includes('\\"')) {
+        try { rawJson = JSON.parse(rawJson); } catch (e) {} // intentar des-escapar
+      }
+      options.credentials = typeof rawJson === 'string' ? JSON.parse(rawJson) : rawJson;
+      console.log('[BigQuery] Usando credenciales desde la variable de entorno GCP_CREDENTIALS_JSON');
+    } catch (e) {
+      console.error('[ERROR] La variable GCP_CREDENTIALS_JSON no contiene un JSON válido:', e.message);
+      return null;
+    }
+  } 
+  else if (fs.existsSync(KEY_FILE)) {
+    options.keyFilename = KEY_FILE;
+    console.log('[BigQuery] Usando credenciales desde el archivo service-account.json');
+  } 
+  else {
+    console.error(`\n[ERROR] No hay credenciales de BigQuery.`);
     return null;
   }
 
-  bqClient = new BigQuery({ projectId: GCP_PROJECT, keyFilename: KEY_FILE });
+  bqClient = new BigQuery(options);
   console.log(`[BigQuery] Cliente listo — Proyecto: ${GCP_PROJECT}`);
   return bqClient;
 }
@@ -154,10 +173,10 @@ server.listen(PORT, () => {
   console.log(`\n  📋 Tabla activa : ${BQ_TABLE}`);
   console.log(`  ⏱  Caché        : ${CACHE_MIN} minutos`);
 
-  if (!fs.existsSync(KEY_FILE)) {
-    console.warn('\n  ⚠️  AVISO: No se encontró service-account.json');
-    console.warn('     La API fallará hasta que agregues las credenciales.\n');
+  if (!fs.existsSync(KEY_FILE) && !process.env.GCP_CREDENTIALS_JSON) {
+    console.warn('\n  ⚠️  AVISO: Faltan credenciales de BigQuery');
+    console.warn('     La API fallará. Usa service-account.json o la variable GCP_CREDENTIALS_JSON.\n');
   } else {
-    console.log('\n  ✅ Credenciales : service-account.json\n');
+    console.log('\n  ✅ Credenciales configuradas correctamente.\n');
   }
 });
