@@ -385,40 +385,60 @@ html, body {
 }
 
 /* ──────────────────────────────────────────────────────────────────────────────
-   RESPONSIVE
+   RESPONSIVE (Pantallas estrechas / Verticales)
    ────────────────────────────────────────────────────────────────────────────── */
 
-@media (max-width: 800px) {
-  .hero-active {
-    gap: 16px;
+@media (max-width: 900px) {
+  .header {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.5rem 1rem;
   }
-  .hero-time-box {
-    padding: 12px 20px;
-    min-width: 150px;
+
+  .hero-zone {
+    flex-direction: column;
+    text-align: center;
+    gap: 1.5rem;
+    padding: 2rem 1.5rem;
   }
-  .hero-time {
-    font-size: 3.2rem;
+
+  .hero-details {
+    align-items: center;
   }
-  .hero-name {
-    font-size: 1.6rem;
-  }
+
   .hero-vehicle {
-    font-size: 1.1rem;
+    justify-content: center;
   }
-  .hero-model-badge {
-    font-size: 0.95rem;
-    padding: 2px 8px;
+
+  .queue-zone {
+    padding: 1.5rem 1rem;
   }
-  .card-queue-name {
-    font-size: 1.15rem;
+
+  .card-queue-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.2rem;
   }
-  .card-queue-time {
-    font-size: 1.3rem;
+
+  .card-queue-left {
+    width: 100%;
   }
-  .card-queue-time-box {
-    min-width: 70px;
+
+  .card-queue-right {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.8rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
   }
+
+  .card-queue-agency {
+    order: 2; /* Move to the right */
+  }
+
   .card-queue-vehicle {
-    font-size: 0.95rem;
+    order: 1; /* Move to the left */
   }
 }
