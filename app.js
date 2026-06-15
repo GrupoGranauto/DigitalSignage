@@ -72,7 +72,8 @@ function loadData() {
       const nissanModels = ['nissan', 'versa', 'sentra', 'altima', 'maxima', 'march', 'kicks', 'xtrail', 'x-trail', 'pathfinder', 'armada', 'np300', 'frontier', 'titan', 'leaf', 'v-drive', 'urvan', 'cabstar', 'tiida', 'tsuru', 'platina', 'note', 'micra', 'datsun', 'z', 'gt-r', 'murano', 'rogue'];
       const filteredData = data.filter(a => {
         const m = (a.MODELO || '').toLowerCase();
-        return nissanModels.some(n => m.includes(n)) || m.trim() === ''; // Permitir vacíos por si acaso
+        // Use word boundaries to prevent 'z' matching 'Mazda', 'Suzuki', etc.
+        return nissanModels.some(n => new RegExp('\\b' + n + '\\b', 'i').test(m)) || m.trim() === ''; 
       });
 
       if (!filteredData.length) {
