@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="Digital Signage para la recepción de taller automotriz Nissan. Visualización en tiempo real de las citas de servicio del día.">
+  <meta name="theme-color" content="#C4002E">
+  <title>Citas de Servicio - Digital Signage</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <main id="app-container" class="app-container">
+
+    <!-- ══════════════════════════════════════════
+         ZONA ROJA — "ACTUALMENTE ATENDIENDO"
+    ══════════════════════════════════════════ -->
+    <section class="hero-zone" id="hero-zone">
+
+      <!-- Barra superior: label + logo + reloj -->
+      <div class="hero-topbar">
+        <div class="hero-label">
+          <span class="hero-dot" id="hero-dot"></span>
+          <span class="hero-label-text">ACTUALMENTE ATENDIENDO</span>
+        </div>
+        <div class="hero-brand">
+          <img src="images/GRUPOGRANAUTO-BLANCO.png" alt="Grupo Gran Auto" class="nissan-logo" id="nissan-logo">
+          <span class="hero-clock" id="live-time">00:00:00 a.m.</span>
+        </div>
+      </div>
+
+      <!-- Cita activa -->
+      <div class="hero-active" id="hero-active">
+        <div class="hero-time-box" id="hero-time-box">
+          <span class="hero-time" id="hero-time">--:--</span>
+        </div>
+        <div class="hero-info" id="hero-info">
+          <div class="hero-name" id="hero-name">Cargando...</div>
+          <div class="hero-vehicle" id="hero-vehicle">
+            <span class="hero-model-badge" id="hero-model-badge"></span>
+            <span class="hero-year" id="hero-year"></span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         ZONA OSCURA — "PRÓXIMAS CITAS EN FILA"
+    ══════════════════════════════════════════ -->
+    <section class="queue-zone" id="queue-zone">
+      <div class="queue-header">
+        <span class="queue-title">PRÓXIMAS CITAS EN FILA</span>
+        <span class="queue-divider"></span>
+      </div>
+
+      <!-- Lista de citas -->
+      <div class="queue-list" id="queue-list">
+        <!-- Se inyecta por JavaScript -->
+      </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════
+         ESTADOS OVERLAY
+    ══════════════════════════════════════════ -->
+
+    <!-- Cargando -->
+    <div class="state-overlay state-loading" id="state-loading" aria-hidden="true">
+      <div class="spinner"></div>
+      <p class="state-msg" id="loading-text">Cargando citas de hoy...</p>
+    </div>
+
+    <!-- Sin citas -->
+    <div class="state-overlay state-empty" id="state-empty" style="display:none;" aria-hidden="true">
+      <svg viewBox="0 0 24 24" class="state-icon"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7v-5z"/></svg>
+      <h2 class="state-heading">Sin Citas</h2>
+      <p class="state-msg" id="empty-text">No hay citas programadas para hoy</p>
+    </div>
+
+    <!-- Error -->
+    <div class="state-overlay state-error" id="state-error" style="display:none;" aria-hidden="true">
+      <svg viewBox="0 0 24 24" class="state-icon"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+      <h2 class="state-heading">Error de Conexión</h2>
+      <p class="state-msg" id="error-text">No fue posible cargar las citas</p>
+      <button class="retry-btn" id="retry-button">Presiona aquí para reintentar</button>
+    </div>
+
+  </main>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
