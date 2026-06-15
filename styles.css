@@ -259,9 +259,8 @@ html, body {
   font-size: 1.4rem;
   font-weight: 700;
   color: var(--text-white);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  line-height: 1.2;
   flex: 1;
 }
 

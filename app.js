@@ -68,8 +68,20 @@ function loadData() {
         showState('empty');
         return;
       }
+      // Filtrar solo modelos Nissan
+      const nissanModels = ['nissan', 'versa', 'sentra', 'altima', 'maxima', 'march', 'kicks', 'xtrail', 'x-trail', 'pathfinder', 'armada', 'np300', 'frontier', 'titan', 'leaf', 'v-drive', 'urvan', 'cabstar', 'tiida', 'tsuru', 'platina', 'note', 'micra', 'datsun', 'z', 'gt-r', 'murano', 'rogue'];
+      const filteredData = data.filter(a => {
+        const m = (a.MODELO || '').toLowerCase();
+        return nissanModels.some(n => m.includes(n)) || m.trim() === ''; // Permitir vacíos por si acaso
+      });
+
+      if (!filteredData.length) {
+        showState('empty');
+        return;
+      }
+
       // Ordenar por hora
-      AppState.appointments = [...data].sort((a, b) => a.HORA_CITA.localeCompare(b.HORA_CITA));
+      AppState.appointments = [...filteredData].sort((a, b) => a.HORA_CITA.localeCompare(b.HORA_CITA));
       showState('content');
       updateActiveIndex();
       renderLayout();
