@@ -148,14 +148,20 @@ function renderLayout() {
       }
 
       card.innerHTML = `
-        <div class="card-queue-left">
-          <div class="card-queue-time-box">
-            <span class="card-queue-time">${app.HORA_CITA}</span>
-          </div>
-          <span class="card-queue-name">${app.NOMBRE}</span>
+      <div class="card-queue-left">
+        <div class="card-queue-time-box">
+          <div class="card-queue-time">${app.HORA_CITA}</div>
         </div>
-        <span class="card-queue-vehicle">${app.MODELO} ${app.ANO}</span>
-      `;
+        <div class="card-queue-info">
+          <div class="card-queue-name">${app.NOMBRE}</div>
+          <div class="card-queue-advisor">Asesor: ${app.ASESOR_SERVICIO || 'Asignado en recepción'}</div>
+        </div>
+      </div>
+      <div class="card-queue-right">
+        <div class="card-queue-agency">Nissauto</div>
+        <div class="card-queue-vehicle">${app.MODELO} ${app.ANO}</div>
+      </div>
+    `;
       listContainer.appendChild(card);
     });
   } else {
