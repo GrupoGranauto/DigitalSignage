@@ -152,11 +152,6 @@ html, body {
   color: var(--text-white);
   white-space: normal;
   word-wrap: break-word;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
 }
 
 .hero-vehicle {
@@ -166,7 +161,7 @@ html, body {
   flex-wrap: wrap;
 }
 
-.hero-vehicle-badge {
+.hero-model-badge {
   background-color: var(--text-white);
   color: var(--nissan-red);
   padding: 4px 12px;
@@ -176,7 +171,7 @@ html, body {
   text-transform: uppercase;
 }
 
-.hero-vehicle-year {
+.hero-year {
   font-size: 1.1rem;
   font-weight: 500;
   color: rgba(255,255,255,0.9);
