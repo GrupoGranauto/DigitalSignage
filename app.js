@@ -108,6 +108,9 @@ function updateActiveIndex() {
 
 /* ── RENDERIZADO ──────────────────────────────────────────────────────── */
 
+let queueInterval = null;
+let queuePage = 0;
+
 function renderLayout() {
   const listContainer = document.getElementById('queue-list');
   if (!listContainer) return;
@@ -125,19 +128,40 @@ function renderLayout() {
   document.getElementById('hero-model-badge').textContent = activeApp.MODELO;
   document.getElementById('hero-year').textContent = activeApp.ANO ? `Modelo ${activeApp.ANO}` : '';
 
-  // Limpiar lista de cola
-  listContainer.innerHTML = '';
-
-  // Determinar citas próximas (todas las siguientes a la activa)
-  // Si la activa es la última, mostrar solo ella o una lista vacía
+  // Determinar citas próximas
   const upcomingApps = apps.slice(activeIdx + 1);
 
-  // Medir cuántas caben dinámicamente
-  const containerHeight = listContainer.clientHeight || 400; // fallback a 400px si no ha renderizado
-  const itemHeight = 68; // aproximado con gap incluido
+  const containerHeight = listContainer.clientHeight || 400;
+  const itemHeight = 68;
   const maxItems = Math.max(1, Math.floor(containerHeight / itemHeight));
 
-  const itemsToRender = upcomingApps.slice(0, maxItems);
+  // Limpiar intervalo anterior
+  if (queueInterval) {
+    clearInterval(queueInterval);
+    queueInterval = null;
+  }
+
+  if (upcomingApps.length > maxItems) {
+    // Si hay más citas de las que caben, iniciar rotación
+    queueInterval = setInterval(() => {
+      queuePage++;
+      if (queuePage * maxItems >= upcomingApps.length) {
+        queuePage = 0;
+      }
+      renderQueuePage(upcomingApps, maxItems, queuePage, listContainer);
+    }, 8000); // Cambiar de página cada 8 segundos
+  } else {
+    queuePage = 0;
+  }
+
+  renderQueuePage(upcomingApps, maxItems, queuePage, listContainer);
+}
+
+function renderQueuePage(upcomingApps, maxItems, page, listContainer) {
+  listContainer.innerHTML = '';
+  
+  const startIdx = page * maxItems;
+  const itemsToRender = upcomingApps.slice(startIdx, startIdx + maxItems);
 
   if (itemsToRender.length > 0) {
     itemsToRender.forEach((app, index) => {
@@ -165,7 +189,6 @@ function renderLayout() {
       listContainer.appendChild(card);
     });
   } else {
-    // Si no hay más citas próximas, mostrar un placeholder premium
     const emptyCard = document.createElement('div');
     emptyCard.className = 'card-queue-item is-empty';
     emptyCard.innerHTML = `
