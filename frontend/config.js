@@ -5,8 +5,8 @@ const CONFIG = {
   // URL del endpoint REST propio
   API_ENDPOINT: '/api/citas-servicio',
 
-  // Intervalo de rotación de páginas en milisegundos (8 segundos)
-  PAGINATION_INTERVAL: 8000,
+  // Intervalo de rotación de páginas en milisegundos (7 segundos)
+  PAGINATION_INTERVAL: 7000,
 
   // Activar/desactivar animaciones de transición
   ANIMATIONS_ENABLED: true,

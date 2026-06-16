@@ -60,11 +60,16 @@ function hhmm() {
 
 /**
  * Convierte un string a Title Case: primera letra de cada palabra en mayúscula,
- * el resto en minúscula. Ej: "RAMIREZ MIRANDA" → "Ramirez Miranda"
+ * el resto en minúscula. Limpia espacios extras y puntos al final.
+ * Ej: "RAMIREZ MIRANDA ." → "Ramirez Miranda"
  */
 function toTitleCase(str) {
   if (!str) return '';
-  return str
+  let cleaned = str.trim();
+  if (cleaned.endsWith('.')) {
+    cleaned = cleaned.slice(0, -1).trim();
+  }
+  return cleaned
     .toLowerCase()
     .replace(/(?:^|\s|-)\S/g, ch => ch.toUpperCase());
 }
@@ -144,8 +149,14 @@ function renderLayout() {
   const upcomingApps = apps.slice(activeIdx + 1);
 
   const containerHeight = listContainer.clientHeight || 400;
-  const itemHeight = 68;
-  const maxItems = Math.max(1, Math.floor(containerHeight / itemHeight));
+  const itemHeight = 220;  // altura estimada por tarjeta grande (incluyendo gap)
+
+  // Número de ítems que caben completamente
+  const fullyVisibleItems = Math.max(1, Math.floor(containerHeight / itemHeight));
+  // Si sobra espacio para mostrar parte del siguiente (al menos 20px), lo renderizamos (se cortará al final)
+  const hasCutoff = (containerHeight % itemHeight) > 20;
+  const maxItemsToShow = hasCutoff ? fullyVisibleItems + 1 : fullyVisibleItems;
+  const stepSize = fullyVisibleItems;
 
   // Limpiar intervalo anterior
   if (queueInterval) {
@@ -153,27 +164,27 @@ function renderLayout() {
     queueInterval = null;
   }
 
-  if (upcomingApps.length > maxItems) {
+  if (upcomingApps.length > maxItemsToShow) {
     // Si hay más citas de las que caben, iniciar rotación
     queueInterval = setInterval(() => {
       queuePage++;
-      if (queuePage * maxItems >= upcomingApps.length) {
+      if (queuePage * stepSize >= upcomingApps.length) {
         queuePage = 0;
       }
-      renderQueuePage(upcomingApps, maxItems, queuePage, listContainer);
-    }, 8000); // Cambiar de página cada 8 segundos
+      renderQueuePage(upcomingApps, maxItemsToShow, queuePage, stepSize, listContainer);
+    }, window.CONFIG.PAGINATION_INTERVAL || 7000); // Cambiar de página según configuración
   } else {
     queuePage = 0;
   }
 
-  renderQueuePage(upcomingApps, maxItems, queuePage, listContainer);
+  renderQueuePage(upcomingApps, maxItemsToShow, queuePage, stepSize, listContainer);
 }
 
-function renderQueuePage(upcomingApps, maxItems, page, listContainer) {
+function renderQueuePage(upcomingApps, maxItemsToShow, page, stepSize, listContainer) {
   listContainer.innerHTML = '';
   
-  const startIdx = page * maxItems;
-  const itemsToRender = upcomingApps.slice(startIdx, startIdx + maxItems);
+  const startIdx = page * stepSize;
+  const itemsToRender = upcomingApps.slice(startIdx, startIdx + maxItemsToShow);
 
   if (itemsToRender.length > 0) {
     itemsToRender.forEach((app, index) => {
