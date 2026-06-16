@@ -56,6 +56,19 @@ function hhmm() {
   return `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;
 }
 
+/* ── UTILIDADES ──────────────────────────────────────────────────────── */
+
+/**
+ * Convierte un string a Title Case: primera letra de cada palabra en mayúscula,
+ * el resto en minúscula. Ej: "RAMIREZ MIRANDA" → "Ramirez Miranda"
+ */
+function toTitleCase(str) {
+  if (!str) return '';
+  return str
+    .toLowerCase()
+    .replace(/(?:^|\s|-)\S/g, ch => ch.toUpperCase());
+}
+
 /* ── DATOS ────────────────────────────────────────────────────────────── */
 
 function loadData() {
@@ -118,13 +131,13 @@ function renderLayout() {
   const activeApp = apps[activeIdx] || apps[0];
   
   document.getElementById('hero-time').textContent = activeApp.HORA_CITA;
-  document.getElementById('hero-name').textContent = activeApp.NOMBRE;
-  document.getElementById('hero-model-badge').textContent = activeApp.MODELO;
+  document.getElementById('hero-name').textContent = toTitleCase(activeApp.NOMBRE);
+  document.getElementById('hero-model-badge').textContent = toTitleCase(activeApp.MODELO);
   document.getElementById('hero-year').textContent = activeApp.ANO ? `Modelo ${activeApp.ANO}` : '';
   
   const advisorEl = document.getElementById('hero-advisor');
   if (advisorEl) {
-    advisorEl.textContent = activeApp.ASESOR_SERVICIO ? `Asesor: ${activeApp.ASESOR_SERVICIO}` : '';
+    advisorEl.textContent = activeApp.ASESOR_SERVICIO ? `Asesor: ${toTitleCase(activeApp.ASESOR_SERVICIO)}` : '';
   }
 
   // Determinar citas próximas
@@ -176,13 +189,13 @@ function renderQueuePage(upcomingApps, maxItems, page, listContainer) {
           <div class="card-queue-time">${app.HORA_CITA}</div>
         </div>
         <div class="card-queue-info">
-          <div class="card-queue-name">${app.NOMBRE}</div>
-          <div class="card-queue-advisor">Asesor: ${app.ASESOR_SERVICIO || 'Asignado en recepción'}</div>
+          <div class="card-queue-name">${toTitleCase(app.NOMBRE)}</div>
+          <div class="card-queue-advisor">Asesor: ${toTitleCase(app.ASESOR_SERVICIO) || 'Asignado en recepción'}</div>
         </div>
       </div>
       <div class="card-queue-right">
         <div class="card-queue-agency">Nissauto</div>
-        <div class="card-queue-vehicle">${app.MODELO} ${app.ANO}</div>
+        <div class="card-queue-vehicle">${toTitleCase(app.MODELO)} ${app.ANO}</div>
       </div>
     `;
       listContainer.appendChild(card);

@@ -2,11 +2,12 @@
   "name": "digital-signage-servicio",
   "version": "1.0.0",
   "description": "Digital Signage - Citas de Servicio Automotriz",
-  "main": "app.js",
+  "main": "backend/server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js",
-    "setup-prueba": "node crear-tabla-prueba.js"
+    "start":        "node backend/server.js",
+    "dev":          "node backend/server.js",
+    "setup-prueba": "node backend/crear-tabla-prueba.js",
+    "check-bq":     "node backend/check_bq.js"
   },
   "dependencies": {
     "@google-cloud/bigquery": "^8.3.1",

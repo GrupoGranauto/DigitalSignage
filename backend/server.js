@@ -5,7 +5,7 @@
  * Para cambiar entre tabla de prueba y producción, edita .env y reinicia.
  */
 
-require('dotenv').config();
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 
 const http   = require('http');
 const fs     = require('fs');
@@ -19,10 +19,11 @@ const { BigQuery } = require('@google-cloud/bigquery');
 const PORT         = parseInt(process.env.PORT         || '8080');
 const CACHE_MIN    = parseInt(process.env.CACHE_MINUTES || '5');
 const BQ_TABLE     = process.env.BQ_TABLE || 'base-maestra-gn.Respaldo.tab_respaldo_master_citas';
-const KEY_FILE     = path.join(__dirname, 'service-account.json');
+const KEY_FILE     = path.join(__dirname, '../service-account.json');
+const FRONTEND_DIR = path.join(__dirname, '../frontend');
 
 // Parsear proyecto, dataset y tabla desde BQ_TABLE (formato: project.dataset.table)
-const [GCP_PROJECT, DATASET_ID, TABLE_ID] = BQ_TABLE.split('.');
+const [GCP_PROJECT] = BQ_TABLE.split('.');
 
 const BIGQUERY_QUERY = `
   SELECT
@@ -54,9 +55,8 @@ function getBigQueryClient() {
   if (process.env.GCP_CREDENTIALS_JSON) {
     try {
       let rawJson = process.env.GCP_CREDENTIALS_JSON;
-      // Si el JSON viene con barras invertidas (ej. "{\"type\"..."), quitar escapes si es necesario
       if (rawJson.startsWith('"') || rawJson.includes('\\"')) {
-        try { rawJson = JSON.parse(rawJson); } catch (e) {} // intentar des-escapar
+        try { rawJson = JSON.parse(rawJson); } catch (e) {}
       }
       options.credentials = typeof rawJson === 'string' ? JSON.parse(rawJson) : rawJson;
       console.log('[BigQuery] Usando credenciales desde la variable de entorno GCP_CREDENTIALS_JSON');
@@ -64,11 +64,11 @@ function getBigQueryClient() {
       console.error('[ERROR] La variable GCP_CREDENTIALS_JSON no contiene un JSON válido:', e.message);
       return null;
     }
-  } 
+  }
   else if (fs.existsSync(KEY_FILE)) {
     options.keyFilename = KEY_FILE;
     console.log('[BigQuery] Usando credenciales desde el archivo service-account.json');
-  } 
+  }
   else {
     console.error(`\n[ERROR] No hay credenciales de BigQuery.`);
     return null;
@@ -125,7 +125,11 @@ const MIME = {
   '.json': 'application/json',
   '.svg':  'image/svg+xml',
   '.png':  'image/png',
-  '.jpg':  'image/jpeg'
+  '.jpg':  'image/jpeg',
+  '.otf':  'font/otf',
+  '.ttf':  'font/ttf',
+  '.woff': 'font/woff',
+  '.woff2':'font/woff2'
 };
 
 const server = http.createServer(async (req, res) => {
@@ -146,15 +150,25 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  let filePath = '.' + decodeURIComponent(req.url.split('?')[0]);
-  if (filePath === './') filePath = './index.html';
+  // Servir archivos estáticos desde frontend/
+  let relativePath = decodeURIComponent(req.url.split('?')[0]);
+  if (relativePath === '/') relativePath = '/index.html';
 
-  console.log(`[HTTP] Petición: ${req.url} -> filePath: ${filePath}`);
+  const filePath = path.join(FRONTEND_DIR, relativePath);
+
+  // Prevenir path traversal fuera de frontend/
+  if (!filePath.startsWith(FRONTEND_DIR)) {
+    res.writeHead(403, { 'Content-Type': 'text/plain' });
+    res.end('403 Forbidden');
+    return;
+  }
+
+  console.log(`[HTTP] Petición: ${req.url} -> ${path.relative(path.join(__dirname, '..'), filePath)}`);
 
   const ext = path.extname(filePath).toLowerCase();
   fs.readFile(filePath, (err, content) => {
     if (err) {
-      console.error(`[HTTP] Error al leer archivo ${filePath}:`, err.code);
+      if (err.code !== 'ENOENT') console.error(`[HTTP] Error al leer ${filePath}:`, err.code);
       res.writeHead(err.code === 'ENOENT' ? 404 : 500, { 'Content-Type': 'text/plain' });
       res.end(err.code === 'ENOENT' ? '404 No encontrado' : `Error: ${err.code}`);
     } else {
@@ -172,6 +186,7 @@ server.listen(PORT, () => {
   console.log('==========================================================');
   console.log(`\n  📋 Tabla activa : ${BQ_TABLE}`);
   console.log(`  ⏱  Caché        : ${CACHE_MIN} minutos`);
+  console.log(`  📁 Frontend     : ${FRONTEND_DIR}`);
 
   if (!fs.existsSync(KEY_FILE) && !process.env.GCP_CREDENTIALS_JSON) {
     console.warn('\n  ⚠️  AVISO: Faltan credenciales de BigQuery');

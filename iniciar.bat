@@ -13,7 +13,7 @@ if %errorlevel% equ 0 (
     echo.
     echo (Presiona Ctrl+C en esta ventana para detener el servidor)
     echo ==========================================================
-    node server.js
+    node backend/server.js
     goto end
 )
 

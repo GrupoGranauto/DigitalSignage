@@ -1,26 +1,31 @@
 /**
- * crear-tabla-prueba.js
+ * backend/crear-tabla-prueba.js
  *
- * Crea la tabla `tab_respaldo_master_citas_prueba` en BigQuery
- * e inserta citas de prueba cada 1 minuto durante un lapso de 2 horas
- * centradas en la hora actual.
+ * Crea la tabla definida en BQ_TABLE (.env) en BigQuery
+ * e inserta citas de prueba centradas en la hora actual.
  *
  * Uso:
- *   node crear-tabla-prueba.js
+ *   npm run setup-prueba
+ *   node backend/crear-tabla-prueba.js
  */
 
-require('dotenv').config();
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 const path = require('path');
 const { BigQuery } = require('@google-cloud/bigquery');
 
 // ──────────────────────────────────────────────────────────────────────────────
-// CONFIGURACIÓN
+// CONFIGURACIÓN (desde .env)
 // ──────────────────────────────────────────────────────────────────────────────
 
-const KEY_FILE   = path.join(__dirname, 'service-account.json');
-const PROJECT_ID = 'base-maestra-gn';
-const DATASET_ID = 'Respaldo';
-const TABLE_ID   = 'tab_respaldo_master_citas_prueba';
+const KEY_FILE = path.join(__dirname, '../service-account.json');
+
+const BQ_TABLE   = process.env.BQ_TABLE || 'base-maestra-gn.Respaldo.tab_respaldo_master_citas_prueba';
+const [PROJECT_ID, DATASET_ID, TABLE_ID] = BQ_TABLE.split('.');
+
+if (!PROJECT_ID || !DATASET_ID || !TABLE_ID) {
+  console.error(`[ERROR] BQ_TABLE en .env no tiene el formato correcto: proyecto.dataset.tabla\n  Valor actual: "${BQ_TABLE}"`);
+  process.exit(1);
+}
 
 // ──────────────────────────────────────────────────────────────────────────────
 // DATOS ALEATORIOS
@@ -57,7 +62,6 @@ const ASESORES = [
 const ANOS = ['2018', '2019', '2020', '2021', '2022', '2023', '2024'];
 
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-
 function pad(n) { return String(n).padStart(2, '0'); }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -68,17 +72,15 @@ function generarCitas() {
   const now   = new Date();
   const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 
-  // Comenzar 30 minutos antes de ahora y cubrir 2 horas (120 minutos total)
   const startMs = now.getTime() - 30 * 60 * 1000;
   const rows    = [];
 
   for (let i = 0; i < 120; i++) {
-    const citaMs   = startMs + i * 60 * 1000;          // +1 min por iteración
+    const citaMs   = startMs + i * 60 * 1000;
     const citaDate = new Date(citaMs);
     const hora     = `${pad(citaDate.getHours())}:${pad(citaDate.getMinutes())}`;
     const folio    = `PRU-${String(10000 + i).padStart(5, '0')}`;
 
-    // Evitar nombres repetidos consecutivos
     let nombre = pick(NOMBRES);
     if (rows.length > 0 && rows[rows.length - 1].NOMBRE === nombre) {
       nombre = pick(NOMBRES);
@@ -117,7 +119,8 @@ const SCHEMA = [
 // ──────────────────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log('\n🚀 Iniciando creación de tabla de prueba en BigQuery...\n');
+  console.log(`\n🚀 Iniciando creación de tabla en BigQuery...`);
+  console.log(`   📋 Tabla objetivo: ${BQ_TABLE}\n`);
 
   const bq      = new BigQuery({ projectId: PROJECT_ID, keyFilename: KEY_FILE });
   const dataset = bq.dataset(DATASET_ID);

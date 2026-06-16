@@ -2,6 +2,23 @@
    DIGITAL SIGNAGE - NISSAN PREMIUM SERVICE BOARD
    ========================================================================== */
 
+/* ── Tipografía Nissan Brand (archivos locales) ───────────────────────────── */
+@font-face {
+  font-family: 'NissanBrand';
+  src: url('Assets/nissanbrand_bold.otf') format('opentype');
+  font-weight: 700 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'NissanBrand';
+  src: url('Assets/nissanbrand_regular.otf') format('opentype');
+  font-weight: 100 600;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --nissan-red:  #C3002F;
   --dark-red:    #8E0020;
@@ -10,7 +27,7 @@
   --time-bg-dark:#171717;
   --text-white:  #FEFFFF;
   --text-muted:  #A0A0A0;
-  --font:        'Inter', system-ui, sans-serif;
+  --font:        'NissanBrand', system-ui, sans-serif;
 }
 
 *, *::before, *::after {
@@ -208,7 +225,6 @@ html, body {
   background-color: rgba(0, 0, 0, 0.25);
   padding: 4px 12px;
   border-radius: 4px;
-  text-transform: uppercase;
 }
 
 /* ──────────────────────────────────────────────────────────────────────────────
