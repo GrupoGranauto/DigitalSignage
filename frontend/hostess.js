@@ -45,17 +45,24 @@ function showConfirmModal(title, message) {
 
     titleEl.textContent = title;
     msgEl.textContent = message;
+
+    // Clonar los botones para limpiar todos los event listeners anteriores y prevenir fugas de eventos o bloqueos
+    const newOkBtn = okBtn.cloneNode(true);
+    const newCancelBtn = cancelBtn.cloneNode(true);
+    okBtn.parentNode.replaceChild(newOkBtn, okBtn);
+    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+
     modal.style.display = 'flex';
 
-    const cleanUp = (result) => {
-      okBtn.onclick = null;
-      cancelBtn.onclick = null;
+    newOkBtn.addEventListener('click', () => {
       modal.style.display = 'none';
-      resolve(result);
-    };
+      resolve(true);
+    }, { once: true });
 
-    okBtn.onclick = () => cleanUp(true);
-    cancelBtn.onclick = () => cleanUp(false);
+    newCancelBtn.addEventListener('click', () => {
+      modal.style.display = 'none';
+      resolve(false);
+    }, { once: true });
   });
 }
 
@@ -281,7 +288,7 @@ function renderAppointments() {
             <span class="status-badge active-signage"><span class="pulse-dot"></span> En Pantalla</span>
           </div>
           <div class="hostess-card-actions-row" style="gap: 8px;">
-            <button class="action-btn exit-btn" style="flex: 1.5;" onclick="setSalida('${app.FOLIO_CITA}')">Dar Salida</button>
+            <button class="action-btn exit-btn" style="flex: 1.5;" onclick="setSalida('${app.FOLIO_CITA}')">Vehículo recibido</button>
             <button class="action-btn queue-return-btn" style="flex: 1.2;" onclick="setRegresarFila('${app.FOLIO_CITA}')">Regresar a fila</button>
           </div>
         </div>
@@ -294,7 +301,7 @@ function renderAppointments() {
           </div>
           <div class="hostess-card-actions-row" style="gap: 8px;">
             <button class="action-btn screen-btn" style="flex: 1.2;" onclick="setAttending('${app.FOLIO_CITA}')">En Pantalla</button>
-            <button class="action-btn exit-btn" style="flex: 1.2;" onclick="setSalida('${app.FOLIO_CITA}')">Dar Salida</button>
+            <button class="action-btn exit-btn" style="flex: 1.2;" onclick="setSalida('${app.FOLIO_CITA}')">Vehículo recibido</button>
             <button class="action-btn queue-return-btn" style="flex: 1.2;" onclick="setRegresarFila('${app.FOLIO_CITA}')">Regresar a fila</button>
           </div>
         </div>
@@ -420,10 +427,10 @@ window.setSalida = function(folio) {
   const app = HostessState.appointments.find(a => a.FOLIO_CITA === folio);
   const nombreCita = app ? app.NOMBRE : '';
   const confirmMsg = nombreCita
-    ? `¿Desea dar salida y finalizar la cita para ${toTitleCase(nombreCita)}?`
-    : '¿Desea finalizar esta cita?';
+    ? `¿Desea marcar como recibido el vehículo para la cita de ${toTitleCase(nombreCita)}?`
+    : '¿Desea marcar esta cita como vehículo recibido?';
 
-  showConfirmModal('Dar Salida', confirmMsg).then(confirmed => {
+  showConfirmModal('Vehículo Recibido', confirmMsg).then(confirmed => {
     if (!confirmed) return;
 
     const url = '/api/atender';
@@ -448,8 +455,8 @@ window.setSalida = function(folio) {
         }
       })
       .catch(err => {
-        console.error('[Hostess] Error al dar salida a la cita:', err);
-        alert('Hubo un error al dar salida a la cita. Por favor, reintenta.');
+        console.error('[Hostess] Error al marcar vehículo recibido:', err);
+        alert('Hubo un error al marcar el vehículo como recibido. Por favor, reintenta.');
       });
   });
 };

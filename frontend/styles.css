@@ -66,15 +66,19 @@ html, body {
 
 .hero-zone {
   position: relative; /* Para posicionamiento absoluto del reloj */
-  flex: 0 0 auto;
+  flex: 0 0 36vh;
+  height: 36vh;
+  min-height: 270px;
   background: var(--nissan-red);
-  padding: 16px 36px 20px 36px;
+  padding: 16px 36px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   z-index: 10;
   display: flex;
   flex-direction: column;
-  gap: 6px; /* Reducido para eliminar el espacio amarillo */
+  justify-content: flex-start;
   border-bottom: 4px solid var(--dark-red);
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 /* Barra Superior Hero */
@@ -101,7 +105,7 @@ html, body {
 }
 
 .hero-label-text {
-  font-size: 1.25rem;
+  font-size: clamp(16px, 1.35rem, 3.5vh);
   font-weight: 800;
   letter-spacing: 2px;
   color: rgba(254, 255, 255, 0.9);
@@ -116,7 +120,7 @@ html, body {
 }
 
 .nissan-logo {
-  height: 2.8rem;
+  height: min(2.5rem, 6vh);
   width: auto;
   object-fit: contain;
   filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.2));
@@ -129,9 +133,9 @@ html, body {
 
 .hero-clock {
   position: absolute;
-  bottom: 24px;
+  bottom: clamp(10px, 2vh, 20px);
   right: 36px;
-  font-size: 1.4rem; /* Más visible en la parte inferior */
+  font-size: clamp(16px, 2.2vh, 1.4rem);
   font-weight: 600;
   color: rgba(254, 255, 255, 0.9);
   font-variant-numeric: tabular-nums;
@@ -142,28 +146,29 @@ html, body {
 .hero-active {
   display: flex;
   align-items: center;
-  gap: 36px;
-  padding-right: 280px; /* Reservar más espacio para el reloj en pantallas grandes */
+  gap: 24px;
+  padding-right: 220px; /* Reservar más espacio para el reloj en pantallas grandes */
+  margin-top: auto;
+  margin-bottom: auto;
 }
 
 .hero-time-box {
   background-color: var(--dark-red);
-  border-radius: 16px;
-  padding: 22px 36px;
+  border-radius: 12px;
+  padding: clamp(10px, 2vh, 18px) clamp(16px, 2.5vw, 32px);
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.35);
-  min-width: 280px;
+  min-width: clamp(200px, 20vw, 280px);
 }
 
 .hero-time {
-  font-size: 5.6rem;
+  font-size: clamp(60px, 5.2rem, 13vh);
   font-weight: 900;
   color: var(--text-white);
   line-height: 1;
-  letter-spacing: -2px;
-  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
 }
 
 .hero-info {
@@ -175,7 +180,7 @@ html, body {
 }
 
 .hero-name {
-  font-size: 2.8rem;
+  font-size: clamp(32px, 3rem, 7.5vh);
   font-weight: 800;
   line-height: 1.15;
   color: var(--text-white);
@@ -186,7 +191,7 @@ html, body {
 .hero-vehicle {
   display: flex;
   align-items: center;
-  gap: 1.2rem;
+  gap: 8px 16px;
   flex-wrap: wrap;
 }
 
@@ -194,35 +199,35 @@ html, body {
   background-color: rgba(255, 255, 255, 0.15);
   color: var(--text-white);
   border: 2px solid rgba(255, 255, 255, 0.4);
-  padding: 6px 16px;
+  padding: clamp(4px, 0.8vh, 8px) clamp(10px, 1.2vw, 18px);
   border-radius: 6px;
   font-weight: 800;
-  font-size: 1.25rem;
+  font-size: clamp(14px, 1.15rem, 3vh);
   letter-spacing: 0.5px;
 }
 
 .hero-model-badge {
   background-color: var(--text-white);
   color: var(--nissan-red);
-  padding: 6px 16px;
+  padding: clamp(4px, 0.8vh, 8px) clamp(10px, 1.2vw, 18px);
   border-radius: 6px;
   font-weight: 800;
-  font-size: 1.25rem;
+  font-size: clamp(14px, 1.15rem, 3vh);
   text-transform: uppercase;
 }
 
 .hero-year {
-  font-size: 1.4rem;
+  font-size: clamp(16px, 1.3rem, 3.2vh);
   font-weight: 500;
   color: rgba(255,255,255,0.9);
 }
 
 .hero-advisor {
-  font-size: 1.25rem;
+  font-size: clamp(14px, 1.15rem, 3vh);
   font-weight: 700;
   color: var(--text-white);
   background-color: rgba(0, 0, 0, 0.25);
-  padding: 6px 16px;
+  padding: clamp(4px, 0.8vh, 8px) clamp(10px, 1.2vw, 18px);
   border-radius: 6px;
 }
 
@@ -233,10 +238,10 @@ html, body {
 .queue-zone {
   flex: 1;
   background-color: var(--bg-dark);
-  padding: 24px 36px;
+  padding: 16px 36px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   overflow: hidden;
 }
 
@@ -262,7 +267,7 @@ html, body {
 .queue-list {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 0.8rem;
   flex: 1;
   overflow: hidden;
 }
@@ -271,12 +276,12 @@ html, body {
 .card-queue-item {
   background-color: var(--card-dark);
   border-radius: 12px;
-  border-left: 10px solid var(--nissan-red);
-  padding: 1.6rem 2.5rem;
+  border-left: 8px solid var(--nissan-red);
+  padding: 1.1rem 1.8rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 3rem;
+  gap: 2rem;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
   transition: transform 0.2s ease;
 }
@@ -284,36 +289,41 @@ html, body {
 .card-queue-left {
   display: flex;
   align-items: center;
-  gap: 2.5rem;
+  gap: 1.8rem;
   flex: 1;
   min-width: 0;
 }
 
 .card-queue-time-box {
   background-color: var(--time-bg-dark);
-  padding: 1rem 1.8rem;
+  padding: 0.6rem 1.2rem;
   border-radius: 8px;
-  min-width: 150px;
+  min-width: 140px;
   text-align: center;
 }
 
 .card-queue-time {
-  font-size: 2.8rem;
+  font-size: clamp(36px, 2.4rem, 6vh);
   font-weight: 900;
   color: var(--nissan-red);
   line-height: 1;
-  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.time-colon {
+  margin: 0 0.08em;
+  display: inline-block;
 }
 
 .card-queue-info {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.2rem;
   flex: 1;
 }
 
 .card-queue-name {
-  font-size: 2.2rem;
+  font-size: clamp(24px, 1.8rem, 4.5vh);
   font-weight: 700;
   color: var(--text-white);
   white-space: normal;
@@ -321,7 +331,7 @@ html, body {
 }
 
 .card-queue-advisor {
-  font-size: 1.35rem;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--text-muted);
 }
@@ -330,20 +340,20 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 0.4rem;
-  min-width: 250px;
+  gap: 0.2rem;
+  min-width: 200px;
   text-align: right;
 }
 
 .card-queue-agency {
-  font-size: 1.15rem;
+  font-size: clamp(16px, 1.1rem, 2.8vh);
   font-weight: 800;
   color: var(--nissan-red);
   letter-spacing: 1.5px;
 }
 
 .card-queue-vehicle {
-  font-size: 1.6rem;
+  font-size: clamp(20px, 1.4rem, 3.5vh);
   font-weight: 600;
   color: var(--text-white);
   white-space: nowrap;
@@ -440,19 +450,63 @@ html, body {
   to { transform: rotate(360deg); }
 }
 
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(15px);
+@keyframes sweepOutUp {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
   }
-  to {
+  100% {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+}
+
+@keyframes sweepInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-.animate-in {
-  animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+.sweep-out-up {
+  animation: sweepOutUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.sweep-in-up {
+  animation: sweepInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ── INTERMEDIATE RESPONSIVE (1200px split-screens / tablets) ──────────────── */
+@media (max-width: 1200px) {
+  .hero-zone {
+    padding: 12px 24px;
+    min-height: 250px;
+  }
+  .hero-active {
+    gap: 16px;
+    padding-right: 180px;
+  }
+  .hero-time-box {
+    min-width: clamp(160px, 16vw, 220px);
+    padding: clamp(6px, 1.5vh, 12px) clamp(10px, 2vw, 20px);
+  }
+  .hero-time {
+    font-size: clamp(38px, 9vh, 4rem);
+  }
+  .hero-name {
+    font-size: clamp(20px, 3.8vh, 2rem);
+  }
+  .hero-agency-badge, .hero-model-badge, .hero-advisor {
+    font-size: clamp(11px, 1.6vh, 0.9rem);
+    padding: 3px 8px;
+  }
+  .hero-year {
+    font-size: clamp(11px, 1.6vh, 0.95rem);
+  }
 }
 
 /* ──────────────────────────────────────────────────────────────────────────────
@@ -467,6 +521,10 @@ html, body {
     align-items: stretch;
     gap: 12px;
     padding: 16px 20px 20px 20px;
+    height: auto;
+    flex: 0 0 auto;
+    min-height: auto;
+    overflow: visible;
   }
 
   .hero-topbar {

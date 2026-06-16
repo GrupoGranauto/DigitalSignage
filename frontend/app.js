@@ -148,6 +148,12 @@ function formatAgencia(agenciaRaw) {
   return AGENCIA_MAP[key] || toTitleCase(agenciaRaw);
 }
 
+function formatTimeHTML(timeStr) {
+  if (!timeStr) return '';
+  return timeStr.replace(':', '<span class="time-colon">:</span>');
+}
+
+
 /* ── DATOS ────────────────────────────────────────────────────────────── */
 
 function loadData() {
@@ -248,7 +254,7 @@ function renderLayout() {
     if (dotEl) dotEl.style.display = 'inline-block';
     if (timeBoxEl) timeBoxEl.style.display = 'flex';
     
-    document.getElementById('hero-time').textContent = activeApp.HORA_CITA;
+    document.getElementById('hero-time').innerHTML = formatTimeHTML(activeApp.HORA_CITA);
     nameEl.textContent = toTitleCase(activeApp.NOMBRE);
     
     vehicleEl.innerHTML = `
@@ -308,7 +314,14 @@ function renderLayout() {
   });
 
   const containerHeight = listContainer.clientHeight || 400;
-  const itemHeight = 220;  // altura estimada por tarjeta grande (incluyendo gap)
+  
+  // Medir la altura real de la primera tarjeta y el gap si ya están renderizados
+  const firstCard = listContainer.querySelector('.card-queue-item');
+  const computedGap = window.getComputedStyle(listContainer).gap;
+  const gapValue = computedGap ? parseFloat(computedGap) : 24; // fallback a 0.8rem (~24px)
+  const itemHeight = (firstCard && firstCard.offsetHeight > 40)
+    ? (firstCard.offsetHeight + gapValue)
+    : 140; // fallback inicial si la lista está vacía
 
   // Número de ítems que caben completamente
   const fullyVisibleItems = Math.max(1, Math.floor(containerHeight / itemHeight));
@@ -326,17 +339,39 @@ function renderLayout() {
   if (upcomingApps.length > maxItemsToShow) {
     // Si hay más citas de las que caben, iniciar rotación
     queueInterval = setInterval(() => {
-      queuePage++;
-      if (queuePage * stepSize >= upcomingApps.length) {
-        queuePage = 0;
-      }
-      renderQueuePage(upcomingApps, maxItemsToShow, queuePage, stepSize, listContainer);
+      rotateQueue(upcomingApps, maxItemsToShow, stepSize, listContainer);
     }, window.CONFIG.PAGINATION_INTERVAL || 7000); // Cambiar de página según configuración
   } else {
     queuePage = 0;
   }
 
   renderQueuePage(upcomingApps, maxItemsToShow, queuePage, stepSize, listContainer);
+}
+
+function rotateQueue(upcomingApps, maxItemsToShow, stepSize, listContainer) {
+  const cards = listContainer.querySelectorAll('.card-queue-item');
+
+  const proceedToNextPage = () => {
+    queuePage++;
+    if (queuePage * stepSize >= upcomingApps.length) {
+      queuePage = 0;
+    }
+    renderQueuePage(upcomingApps, maxItemsToShow, queuePage, stepSize, listContainer);
+  };
+
+  if (cards.length > 0 && window.CONFIG.ANIMATIONS_ENABLED) {
+    cards.forEach((card, idx) => {
+      card.classList.remove('sweep-in-up');
+      card.style.animationDelay = `${idx * 50}ms`;
+      card.classList.add('sweep-out-up');
+    });
+
+    // Esperar a que la última tarjeta termine de salir (350ms de animación + delay)
+    const totalDelay = 350 + (cards.length - 1) * 50;
+    setTimeout(proceedToNextPage, totalDelay);
+  } else {
+    proceedToNextPage();
+  }
 }
 
 function renderQueuePage(upcomingApps, maxItemsToShow, page, stepSize, listContainer) {
@@ -348,7 +383,8 @@ function renderQueuePage(upcomingApps, maxItemsToShow, page, stepSize, listConta
   if (itemsToRender.length > 0) {
     itemsToRender.forEach((app, index) => {
       const card = document.createElement('div');
-      card.className = `card-queue-item${window.CONFIG.ANIMATIONS_ENABLED ? ' animate-in' : ''}`;
+      const animationClass = window.CONFIG.ANIMATIONS_ENABLED ? ' sweep-in-up' : '';
+      card.className = `card-queue-item${animationClass}`;
       if (window.CONFIG.ANIMATIONS_ENABLED) {
         card.style.animationDelay = `${index * 60}ms`;
       }
@@ -356,7 +392,7 @@ function renderQueuePage(upcomingApps, maxItemsToShow, page, stepSize, listConta
       card.innerHTML = `
       <div class="card-queue-left">
         <div class="card-queue-time-box">
-          <div class="card-queue-time">${app.HORA_CITA}</div>
+          <div class="card-queue-time">${formatTimeHTML(app.HORA_CITA)}</div>
         </div>
         <div class="card-queue-info">
           <div class="card-queue-name">${toTitleCase(app.NOMBRE)}</div>
