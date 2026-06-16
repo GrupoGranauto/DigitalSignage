@@ -198,7 +198,6 @@ html, body {
   border-radius: 6px;
   font-weight: 800;
   font-size: 1.25rem;
-  text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
@@ -340,7 +339,6 @@ html, body {
   font-size: 1.15rem;
   font-weight: 800;
   color: var(--nissan-red);
-  text-transform: uppercase;
   letter-spacing: 1.5px;
 }
 
@@ -604,4 +602,188 @@ html, body {
     order: 1;
     font-size: 1rem;
   }
+}
+
+/* ── PORTAL SELECTOR DE ROLES ────────────────────────────────────────────── */
+
+.portal-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  width: 100%;
+  background-color: #f4f6f8; /* Fondo claro corporativo */
+  padding: 40px 16px;
+  box-sizing: border-box;
+}
+
+.portal-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.portal-logo {
+  height: 3rem;
+  margin-bottom: 20px;
+  filter: brightness(0); /* Hace que el logo blanco sea negro en fondo claro */
+  opacity: 0.85;
+}
+
+.portal-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #1e293b; /* Texto oscuro corporativo */
+}
+
+.portal-subtitle {
+  font-size: 1rem;
+  color: #64748b;
+  margin-top: 8px;
+}
+
+.portal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(285px, 1fr));
+  gap: 20px;
+  width: 100%;
+  max-width: 720px;
+}
+
+.portal-card {
+  background: #ffffff; /* Tarjeta blanca */
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 32px 24px;
+  text-decoration: none;
+  color: #1e293b;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.portal-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  background: #f1f5f9;
+  color: #c3002f;
+  margin-bottom: 4px;
+}
+
+.portal-card-icon svg {
+  width: 26px;
+  height: 26px;
+  fill: currentColor;
+}
+
+.portal-card-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.portal-card-desc {
+  font-size: 0.9rem;
+  color: #64748b;
+  line-height: 1.45;
+  flex: 1;
+}
+
+.portal-card-action {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #c3002f;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 8px;
+  display: inline-block;
+}
+
+.hostess-card-link:active {
+  border-color: #c3002f;
+  box-shadow: 0 4px 12px rgba(195, 0, 47, 0.1);
+  background: #fdf2f4;
+}
+
+.admin-card-link:active {
+  border-color: #64748b;
+  box-shadow: 0 4px 12px rgba(100, 116, 139, 0.1);
+  background: #f8fafc;
+}
+
+.portal-card:active .portal-card-action {
+  transform: translateX(3px);
+}
+
+/* ── BARRA DE UNIDADES EN ATENCIÓN ────────────────────────────────────────── */
+
+.attending-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background-color: rgba(24, 24, 24, 0.95);
+  padding: 10px 36px;
+  border-bottom: 1px solid rgba(254, 255, 255, 0.05);
+  flex: 0 0 auto;
+  min-height: 48px;
+}
+
+.attending-bar-title {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.attending-bar-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.attending-badge {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(254, 255, 255, 0.85);
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.attending-badge:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.attending-badge-dot {
+  width: 6px;
+  height: 6px;
+  background-color: #2ecc71;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #2ecc71;
+  animation: pulse 1.8s infinite ease-in-out;
+}
+
+/* Permitir scroll cuando el portal está activo */
+html.portal-mode, body.portal-mode {
+  height: auto !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
 }

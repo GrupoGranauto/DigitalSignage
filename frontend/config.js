@@ -20,7 +20,7 @@ const CONFIG = {
   // Textos para los distintos estados de la aplicación
   TEXTS: {
     LOADING: 'Cargando citas de hoy...',
-    EMPTY: 'No hay citas programadas para hoy',
+    EMPTY: 'Agradecemos su preferencia. En este momento, nuestros asesores se encuentran brindando atención personalizada en taller y recepción de servicio. Si tiene una cita programada o requiere asistencia, por favor diríjase al mostrador. Estamos listos para atenderle.',
     ERROR: 'No fue posible cargar las citas',
     ERROR_RELOAD: 'Presione aquí para recargar la pantalla o pulse F5',
     NEXT_APPOINTMENT_BADGE: 'Próxima cita',

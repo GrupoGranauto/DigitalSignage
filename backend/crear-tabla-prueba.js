@@ -93,7 +93,8 @@ function generarCitas() {
       NOMBRE:          nombre,
       MODELO:          pick(MODELOS),
       ANO:             parseInt(pick(ANOS)),
-      ASESOR_SERVICIO: pick(ASESORES)
+      ASESOR_SERVICIO: pick(ASESORES),
+      AGENCIA:         pick(['NISSAUTO', 'MORELOS', 'CABORCA', 'PEÑASCO', 'INFINITI', 'NAVOJOA'])
     });
   }
 
@@ -111,7 +112,8 @@ const SCHEMA = [
   { name: 'NOMBRE',          type: 'STRING',  mode: 'NULLABLE' },
   { name: 'MODELO',          type: 'STRING',  mode: 'NULLABLE' },
   { name: 'ANO',             type: 'INTEGER', mode: 'NULLABLE' },
-  { name: 'ASESOR_SERVICIO', type: 'STRING',  mode: 'NULLABLE' }
+  { name: 'ASESOR_SERVICIO', type: 'STRING',  mode: 'NULLABLE' },
+  { name: 'AGENCIA',         type: 'STRING',  mode: 'NULLABLE' }
 ];
 
 // ──────────────────────────────────────────────────────────────────────────────

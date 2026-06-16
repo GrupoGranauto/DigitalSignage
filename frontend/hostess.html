@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Panel de Hostess - Citas de Servicio</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* ══════════════════════════════════════════════════
+       PANEL HOSTESS — DISEÑO CORPORATIVO (LIGERO / BLANCO)
+       Diseño móvil-primero, minimalista, limpio y profesional.
+    ══════════════════════════════════════════════════ */
+
+    :root {
+      --bg-light: #f4f6f8;        /* Fondo gris claro empresarial */
+      --card-bg: #ffffff;        /* Fondo blanco para las tarjetas */
+      --text-main: #1e293b;      /* Texto principal oscuro contrastante */
+      --text-muted: #64748b;     /* Texto gris secundario */
+      --nissan-red: #c3002f;     /* Rojo Nissan corporativo */
+      --nissan-red-hover: #9e0024;
+      --border-color: #e2e8f0;   /* Color de bordes limpios */
+      --font: 'NissanBrand', system-ui, sans-serif;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.02);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.02);
+    }
+
+    html {
+      font-size: 16px; /* Base fija para legibilidad móvil */
+    }
+
+    body {
+      background: var(--bg-light) !important;
+      color: var(--text-main) !important;
+      overflow-y: auto;
+      min-height: 100vh;
+      font-family: var(--font);
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px 16px 40px;
+    }
+
+    /* ── HEADER ─────────────────────────────────────── */
+    .hostess-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border-color);
+      gap: 12px;
+    }
+
+    .hostess-title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .hostess-title span {
+      background-color: var(--nissan-red);
+      color: #ffffff;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    .change-agency-btn {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-family: var(--font);
+      font-weight: 700;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background 0.15s ease;
+      white-space: nowrap;
+      flex-shrink: 0;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .change-agency-btn:active {
+      background: #f1f5f9;
+    }
+
+    /* ── SELECTOR DE AGENCIA ────────────────────────── */
+    .selection-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .agency-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px 16px;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      transition: border-color 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .agency-card:active {
+      border-color: var(--nissan-red);
+      background: #fafafa;
+    }
+
+    .agency-name-title {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    /* ── TARJETA DE CITA ────────────────────────────── */
+    .hostess-card {
+      background-color: var(--card-bg);
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      border-left: 5px solid #cbd5e1; /* Gris por defecto */
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Fila superior: tiempo + info del cliente */
+    .hostess-card-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .hostess-card-time {
+      font-size: 1.25rem;
+      font-weight: 900;
+      color: var(--text-main);
+      background: #f1f5f9;
+      border-radius: 6px;
+      padding: 6px 10px;
+      text-align: center;
+      min-width: 68px;
+      flex-shrink: 0;
+      letter-spacing: 0.5px;
+    }
+
+    .hostess-card-details {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .hostess-card-name {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .hostess-card-meta {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .hostess-card-meta .meta-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .meta-label {
+      font-weight: 600;
+      color: var(--text-muted);
+      min-width: 65px;
+      flex-shrink: 0;
+    }
+
+    .hostess-card-meta span.advisor {
+      font-weight: 600;
+      color: var(--text-main);
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .hostess-card-meta span.vehicle {
+      color: var(--nissan-red);
+      font-weight: 700;
+    }
+
+    /* Fila de acciones */
+    .hostess-card-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .hostess-card-actions-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* ── ESTADOS DE TARJETA ─────────────────────────── */
+    .hostess-card.is-attending {
+      border-left-color: var(--nissan-red);
+      background: #fdf2f4; /* Tint sutil rojo Nissan */
+      border-color: #fca5a5;
+    }
+
+    .hostess-card.is-attending .hostess-card-time {
+      background: var(--nissan-red);
+      color: #ffffff;
+    }
+
+    .hostess-card.is-attending-secondary {
+      border-left-color: #10b981; /* Verde esmeralda empresarial */
+      background: #f0fdf4; /* Tint sutil verde */
+      border-color: #a7f3d0;
+    }
+
+    .hostess-card.is-attending-secondary .hostess-card-time {
+      background: #10b981;
+      color: #ffffff;
+    }
+
+    .hostess-card.is-completed {
+      border-left-color: #94a3b8;
+      background: #fafafa;
+      opacity: 0.6;
+    }
+
+    .hostess-card.is-completed .hostess-card-time {
+      background: #e2e8f0;
+      color: #64748b;
+    }
+
+    /* ── BADGES DE ESTADO ───────────────────────────── */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    .status-badge.active-signage {
+      background-color: #fee2e2;
+      border: 1px solid #fca5a5;
+      color: var(--nissan-red);
+    }
+
+    .status-badge.attending-status {
+      background-color: #d1fae5;
+      border: 1px solid #a7f3d0;
+      color: #065f46;
+    }
+
+    .completed-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      background-color: #f1f5f9;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .no-show-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      background-color: #fee2e2;
+      border: 1px solid #fca5a5;
+      color: #b91c1c;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Punto indicador estático (sin animaciones pulsantes) */
+    .pulse-dot {
+      width: 7px;
+      height: 7px;
+      background-color: currentColor;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* ── BOTONES DE ACCIÓN ──────────────────────────── */
+    .attend-btn {
+      width: 100%;
+      background: var(--nissan-red);
+      border: none;
+      color: #ffffff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-family: var(--font);
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 1px 2px rgba(195,0,47,0.15);
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s ease;
+    }
+
+    .attend-btn:active {
+      background: var(--nissan-red-hover);
+    }
+
+    .action-btn {
+      flex: 1;
+      background: #ffffff;
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-family: var(--font);
+      font-weight: 700;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      text-align: center;
+      -webkit-tap-highlight-color: transparent;
+      min-width: 0;
+      box-shadow: var(--shadow-sm);
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .exit-btn {
+      border: 1px solid #ea580c; /* Naranja corporativo */
+      color: #ea580c;
+    }
+
+    .exit-btn:active {
+      background: #fff7ed;
+    }
+
+    .screen-btn {
+      border: 1px solid var(--nissan-red);
+      color: var(--nissan-red);
+    }
+
+    .screen-btn:active {
+      background: #fdf2f4;
+    }
+
+    .reattend-btn {
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      padding: 8px 12px;
+    }
+
+    .reattend-btn:active {
+      background: #f1f5f9;
+    }
+
+    .noshow-btn, .queue-return-btn {
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+    }
+
+    .noshow-btn:active, .queue-return-btn:active {
+      background: #f1f5f9;
+    }
+
+    /* ── ACORDEÓN DE COMPLETADOS ────────────────────── */
+    .completed-accordion {
+      margin-bottom: 20px;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      background: var(--card-bg);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .completed-accordion-header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      background: #f8fafc;
+      border: none;
+      font-family: var(--font);
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+      outline: none;
+    }
+
+    .completed-accordion-header:active {
+      background: #f1f5f9;
+    }
+
+    .accordion-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #completed-count-badge {
+      background: #e2e8f0;
+      color: #475569;
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 800;
+    }
+
+    .accordion-arrow {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+      transition: transform 0.2s ease;
+    }
+
+    .accordion-arrow.is-expanded {
+      transform: rotate(180deg);
+    }
+
+    .completed-accordion-content {
+      padding: 16px 14px 4px;
+      border-top: 1px solid var(--border-color);
+      background: #fafafa;
+    }
+
+    /* ── ESTADO VACÍO ───────────────────────────────── */
+    .empty-state {
+      text-align: center;
+      padding: 50px 20px;
+      background: var(--card-bg);
+      border: 1px dashed var(--border-color);
+      border-radius: 12px;
+      margin-top: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .empty-state h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+
+    .empty-state p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* ── POPUP MODAL PERSONALIZADO ────────────────── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.4); /* Backdrop semitransparente oscuro */
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .animate-modal {
+      animation: modalEnter 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes modalEnter {
+      from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.97);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .modal-header {
+      padding: 18px 20px 10px;
+    }
+
+    .modal-title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .modal-body {
+      padding: 10px 20px 20px;
+    }
+
+    .modal-body p {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .modal-footer {
+      display: flex;
+      gap: 10px;
+      padding: 14px 20px 18px;
+      border-top: 1px solid var(--border-color);
+      background: #f8fafc;
+    }
+
+    .modal-btn {
+      flex: 1;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-family: var(--font);
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .modal-btn.cancel-btn {
+      background: #ffffff;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+    }
+
+    .modal-btn.cancel-btn:active {
+      background: #f1f5f9;
+    }
+
+    .modal-btn.ok-btn {
+      background: var(--nissan-red);
+      border: none;
+      color: #ffffff;
+    }
+
+    .modal-btn.ok-btn:active {
+      background: var(--nissan-red-hover);
+    }
+  </style>
+</head>
+<body>
+
+  <main class="container">
+    <!-- Vista 1: Selector de Agencia -->
+    <div id="agency-selection-view">
+      <div class="hostess-header" style="justify-content: center; margin-bottom: 32px;">
+        <h1 class="hostess-title">SELECCIONA TU AGENCIA</h1>
+      </div>
+      <div class="selection-grid" id="agency-grid">
+        <!-- Inyectado por JS -->
+      </div>
+    </div>
+
+    <!-- Vista 2: Panel de Gestión de Citas -->
+    <div id="hostess-panel-view" style="display: none;">
+      <div class="hostess-header">
+        <h1 class="hostess-title">
+          <span id="display-agency-badge">AGENCIA</span>
+          Citas de Hoy
+        </h1>
+        <button class="change-agency-btn" id="change-agency-button">Cambiar Agencia</button>
+      </div>
+
+      <!-- Sección de Citas Atendidas / No Asistidas (Acordeón Colapsable) -->
+      <div id="completed-section" class="completed-accordion" style="display: none;">
+        <button type="button" class="completed-accordion-header" id="completed-accordion-toggle">
+          <span class="accordion-title">Citas Atendidas / No Asistidas <span id="completed-count-badge">0</span></span>
+          <svg class="accordion-arrow" id="completed-accordion-arrow" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+        </button>
+        <div class="completed-accordion-content" id="completed-accordion-content" style="display: none;">
+          <div id="completed-list">
+            <!-- Inyectado por JS -->
+          </div>
+        </div>
+      </div>
+
+      <div id="appointments-list">
+        <!-- Inyectado por JS -->
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal de confirmación personalizado -->
+  <div id="confirm-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-card animate-modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="confirm-title">Confirmar Acción</h3>
+      </div>
+      <div class="modal-body">
+        <p id="confirm-message">¿Estás seguro de realizar esta acción?</p>
+      </div>
+      <div class="modal-footer">
+        <button id="confirm-cancel-btn" class="modal-btn cancel-btn">Cancelar</button>
+        <button id="confirm-ok-btn" class="modal-btn ok-btn">Aceptar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="hostess.js"></script>
+</body>
+</html>

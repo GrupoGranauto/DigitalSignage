@@ -13,7 +13,36 @@
 </head>
 <body>
 
-  <main id="app-container" class="app-container">
+  <!-- Vista del Portal Selector de Roles (se muestra si no hay query param "agencia") -->
+  <div id="portal-container" class="portal-container" style="display: none;">
+    <div class="portal-header">
+      <img src="images/GRUPOGRANAUTO-BLANCO.png" alt="Grupo Gran Auto" class="portal-logo">
+      <h1 class="portal-title">Sistema de Citas de Servicio</h1>
+      <p class="portal-subtitle">Selecciona el panel al que deseas ingresar</p>
+    </div>
+    
+    <div class="portal-grid">
+      <a href="hostess.html" class="portal-card hostess-card-link">
+        <div class="portal-card-icon">
+          <svg viewBox="0 0 24 24"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+        </div>
+        <h2 class="portal-card-title">Panel de Hostess</h2>
+        <p class="portal-card-desc">Registra atenciones, marca citas activas en sala de espera y gestiona la fila del día.</p>
+        <span class="portal-card-action">Ingresar al Panel &rarr;</span>
+      </a>
+
+      <a href="admin.html" class="portal-card admin-card-link">
+        <div class="portal-card-icon">
+          <svg viewBox="0 0 24 24"><path d="M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7l-2 3v1h8v-1l-2-3h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 12H3V4h18v10z"/></svg>
+        </div>
+        <h2 class="portal-card-title">Configuración de pantallas</h2>
+        <p class="portal-card-desc">Genera y previsualiza enlaces y códigos iframe filtrados por agencia para pantallas de exhibición remotas.</p>
+        <span class="portal-card-action">Ingresar al Panel &rarr;</span>
+      </a>
+    </div>
+  </div>
+
+  <main id="app-container" class="app-container" style="display: none;">
 
     <!-- ══════════════════════════════════════════
          ZONA ROJA — "ACTUALMENTE ATENDIENDO"
@@ -50,6 +79,14 @@
 
     </section>
 
+    <!-- Barra de Unidades en Atención (Subtil / Disimulado) -->
+    <div class="attending-bar" id="attending-bar" style="display: none;">
+      <span class="attending-bar-title">También en Atención:</span>
+      <div class="attending-bar-list" id="attending-bar-list">
+        <!-- Inyectado por JS -->
+      </div>
+    </div>
+
     <!-- ══════════════════════════════════════════
          ZONA OSCURA — "PRÓXIMAS CITAS EN FILA"
     ══════════════════════════════════════════ -->
@@ -75,11 +112,11 @@
       <p class="state-msg" id="loading-text">Cargando citas de hoy...</p>
     </div>
 
-    <!-- Sin citas -->
+    <!-- Sin citas (Estado de Bienvenida Corporativo) -->
     <div class="state-overlay state-empty" id="state-empty" style="display:none;" aria-hidden="true">
-      <svg viewBox="0 0 24 24" class="state-icon"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7v-5z"/></svg>
-      <h2 class="state-heading">Sin Citas</h2>
-      <p class="state-msg" id="empty-text">No hay citas programadas para hoy</p>
+      <img src="images/LOGO NISSAN BLANCO.png" alt="Nissan Logo" style="height: 5rem; margin-bottom: 24px; opacity: 0.95;">
+      <h2 class="state-heading" style="font-size: 2rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-white); margin-bottom: 12px;">¡Bienvenidos!</h2>
+      <p class="state-msg" id="empty-text" style="font-size: 1.15rem; color: var(--text-muted); max-width: 600px; line-height: 1.5; margin: 0 auto; text-align: center;">Recepción de Citas de Servicio. Nuestros asesores están listos para atenderle.</p>
     </div>
 
     <!-- Error -->

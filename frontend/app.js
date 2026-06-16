@@ -12,11 +12,62 @@ const AppState = {
 document.addEventListener('DOMContentLoaded', initApp);
 
 function initApp() {
+  const params = new URLSearchParams(window.location.search);
+  const agencia = params.get('agencia');
+
+  if (!agencia) {
+    // Si no hay agencia en la URL, mostrar el portal selector
+    document.documentElement.classList.add('portal-mode');
+    document.body.classList.add('portal-mode');
+    const portal = document.getElementById('portal-container');
+    if (portal) portal.style.display = 'flex';
+    const appContainer = document.getElementById('app-container');
+    if (appContainer) appContainer.style.display = 'none';
+    return;
+  }
+
+  // Si hay agencia en la URL, mostrar la pantalla de Signage
+  document.documentElement.classList.remove('portal-mode');
+  document.body.classList.remove('portal-mode');
+  const portal = document.getElementById('portal-container');
+  if (portal) portal.style.display = 'none';
+  const appContainer = document.getElementById('app-container');
+  if (appContainer) appContainer.style.display = 'flex';
+
   startClock();
   loadData();
+  startSSE();
+
+  // Polling lento de contingencia (cada 60 segundos)
+  setInterval(loadData, 60000);
 
   const retryBtn = document.getElementById('retry-button');
   if (retryBtn) retryBtn.addEventListener('click', loadData);
+}
+
+let sseSource = null;
+function startSSE() {
+  const params = new URLSearchParams(window.location.search);
+  const agencia = params.get('agencia');
+  if (!agencia) return;
+
+  if (sseSource) {
+    sseSource.close();
+  }
+
+  const sseUrl = `/api/events?agencia=${encodeURIComponent(agencia)}`;
+  sseSource = new EventSource(sseUrl);
+
+  sseSource.onmessage = function(event) {
+    console.log('[SSE] Notificación recibida:', event.data);
+    loadData();
+  };
+
+  sseSource.onerror = function(err) {
+    console.error('[SSE] Error de conexión SSE, reintentando en 5s...', err);
+    sseSource.close();
+    setTimeout(startSSE, 5000);
+  };
 }
 
 /* ── RELOJ ────────────────────────────────────────────────────────────── */
@@ -74,48 +125,98 @@ function toTitleCase(str) {
     .replace(/(?:^|\s|-)\S/g, ch => ch.toUpperCase());
 }
 
+const AGENCIA_MAP = {
+  'NISSAUTO': 'Nissauto',
+  'MORELOS': 'Morelos',
+  'CABORCA': 'Caborca',
+  'CANANEA': 'Cananea',
+  'INFINITI': 'Infiniti',
+  'NAVOJOA': 'Navojoa',
+  'GUAYMAS': 'Guaymas',
+  'PEÑASCO': 'Puerto Peñasco',
+  'MAGDALENA': 'Magdalena',
+  'GRANAUTO': 'GranAuto',
+  'NOGALES': 'Nogales',
+  'AGUA PRIETA': 'Agua Prieta',
+  'AGUAPRIETA': 'Agua Prieta',
+  'PUERTO PEÑASCO': 'Puerto Peñasco'
+};
+
+function formatAgencia(agenciaRaw) {
+  if (!agenciaRaw) return 'Nissauto';
+  const key = agenciaRaw.trim().toUpperCase();
+  return AGENCIA_MAP[key] || toTitleCase(agenciaRaw);
+}
+
 /* ── DATOS ────────────────────────────────────────────────────────────── */
 
 function loadData() {
-  showState('loading');
+  // Solo mostrar overlay de loading la primera vez para evitar parpadeos molestos al hacer polling
+  if (AppState.appointments.length === 0) {
+    showState('loading');
+  }
 
-  fetch(window.CONFIG.API_ENDPOINT, { headers: { 'Accept': 'application/json', 'Cache-Control': 'no-cache' } })
+  const params = new URLSearchParams(window.location.search);
+  const agencia = params.get('agencia');
+  let url = window.CONFIG.API_ENDPOINT;
+  if (agencia) {
+    url += '?agencia=' + encodeURIComponent(agencia);
+  }
+
+  fetch(url, { headers: { 'Accept': 'application/json', 'Cache-Control': 'no-cache' } })
     .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-    .then(data => {
-      if (!Array.isArray(data) || !data.length) {
+    .then(res => {
+      // Manejar formato nuevo { appointments, activeFolio } o anterior de arreglo directo
+      const appointments = (res && typeof res === 'object' && Array.isArray(res.appointments)) ? res.appointments : (Array.isArray(res) ? res : []);
+      const activeFolio = (res && typeof res === 'object') ? res.activeFolio : null;
+      const attendingFolios = (res && typeof res === 'object') ? (res.attendingFolios || []) : [];
+      const completedFolios = (res && typeof res === 'object') ? (res.completedFolios || []) : [];
+      const noShowFolios = (res && typeof res === 'object') ? (res.noShowFolios || []) : [];
+
+      // Verificar si quedan citas activas para mostrar en pantalla
+      const hasActiveAppointments = appointments.some(app => {
+        return !completedFolios.includes(app.FOLIO_CITA) && !noShowFolios.includes(app.FOLIO_CITA);
+      });
+
+      if (!appointments.length || !hasActiveAppointments) {
         showState('empty');
         return;
       }
 
       // Ordenar por hora
-      AppState.appointments = [...data].sort((a, b) => a.HORA_CITA.localeCompare(b.HORA_CITA));
+      AppState.appointments = [...appointments].sort((a, b) => a.HORA_CITA.localeCompare(b.HORA_CITA));
+      AppState.activeFolio = activeFolio;
+      AppState.attendingFolios = attendingFolios;
+      AppState.completedFolios = completedFolios;
+      AppState.noShowFolios = noShowFolios;
+
       showState('content');
       updateActiveIndex();
       renderLayout();
     })
     .catch(err => {
       console.error('Error fetching appointments:', err);
-      showState('error');
+      if (AppState.appointments.length === 0) {
+        showState('error');
+      }
     });
 }
 
 function updateActiveIndex() {
-  const now = hhmm();
-  // Encontrar la última cita cuya hora es menor o igual a la actual (la última que ya inició)
-  let idx = -1;
-  for (let i = AppState.appointments.length - 1; i >= 0; i--) {
-    if (AppState.appointments[i].HORA_CITA <= now) {
-      idx = i;
-      break;
+  const completed = AppState.completedFolios || [];
+  const noShow = AppState.noShowFolios || [];
+
+  // Solo consideramos como activa la cita establecida explícitamente en el Panel de Hostess
+  if (AppState.activeFolio && !completed.includes(AppState.activeFolio) && !noShow.includes(AppState.activeFolio)) {
+    const idx = AppState.appointments.findIndex(app => app.FOLIO_CITA === AppState.activeFolio);
+    if (idx !== -1) {
+      AppState.activeIndex = idx;
+      return;
     }
   }
-  
-  if (idx === -1) {
-    // Si ninguna cita ha empezado aún (ej. temprano en la mañana), la activa es la primera
-    AppState.activeIndex = 0;
-  } else {
-    AppState.activeIndex = idx;
-  }
+
+  // Si no hay ninguna cita marcada explícitamente como activa por la Hostess, no hay activeIndex
+  AppState.activeIndex = -1;
 }
 
 /* ── RENDERIZADO ──────────────────────────────────────────────────────── */
@@ -133,20 +234,78 @@ function renderLayout() {
   if (apps.length === 0) return;
 
   // Cita Activa (Hero)
-  const activeApp = apps[activeIdx] || apps[0];
+  const activeApp = apps[activeIdx];
+  const activeFolio = activeApp ? activeApp.FOLIO_CITA : null;
   
-  document.getElementById('hero-time').textContent = activeApp.HORA_CITA;
-  document.getElementById('hero-name').textContent = toTitleCase(activeApp.NOMBRE);
-  document.getElementById('hero-model-badge').textContent = toTitleCase(activeApp.MODELO);
-  document.getElementById('hero-year').textContent = activeApp.ANO ? `Modelo ${activeApp.ANO}` : '';
-  
-  const advisorEl = document.getElementById('hero-advisor');
-  if (advisorEl) {
-    advisorEl.textContent = activeApp.ASESOR_SERVICIO ? `Asesor: ${toTitleCase(activeApp.ASESOR_SERVICIO)}` : '';
+  const labelTextEl = document.querySelector('.hero-label-text');
+  const dotEl = document.getElementById('hero-dot');
+  const timeBoxEl = document.getElementById('hero-time-box');
+  const nameEl = document.getElementById('hero-name');
+  const vehicleEl = document.getElementById('hero-vehicle');
+
+  if (activeApp) {
+    if (labelTextEl) labelTextEl.textContent = 'ACTUALMENTE ATENDIENDO';
+    if (dotEl) dotEl.style.display = 'inline-block';
+    if (timeBoxEl) timeBoxEl.style.display = 'flex';
+    
+    document.getElementById('hero-time').textContent = activeApp.HORA_CITA;
+    nameEl.textContent = toTitleCase(activeApp.NOMBRE);
+    
+    vehicleEl.innerHTML = `
+      <span class="hero-agency-badge" id="hero-agency-badge">${formatAgencia(activeApp.AGENCIA)}</span>
+      <span class="hero-model-badge" id="hero-model-badge">${toTitleCase(activeApp.MODELO)}</span>
+      <span class="hero-year" id="hero-year">${activeApp.ANO ? `Modelo ${activeApp.ANO}` : ''}</span>
+      <span class="hero-advisor" id="hero-advisor">${activeApp.ASESOR_SERVICIO ? `Asesor: ${toTitleCase(activeApp.ASESOR_SERVICIO)}` : ''}</span>
+    `;
+  } else {
+    // Si no hay ninguna cita activa/siendo atendida, mostrar una tarjeta de bienvenida limpia en la zona roja
+    if (labelTextEl) labelTextEl.textContent = 'BIENVENIDOS';
+    if (dotEl) dotEl.style.display = 'none';
+    if (timeBoxEl) timeBoxEl.style.display = 'none';
+    
+    nameEl.textContent = 'Recepción de Servicio';
+    vehicleEl.innerHTML = `
+      <span class="hero-year" style="font-size: 1.4rem; font-weight: 500; color: rgba(255,255,255,0.9);">
+        Por favor, tome asiento en la sala de espera. En un momento le atenderemos.
+      </span>
+    `;
   }
 
-  // Determinar citas próximas
-  const upcomingApps = apps.slice(activeIdx + 1);
+  // Renderizar la barra de "También en Atención" (Disimulada/Sutil)
+  const attendingBar = document.getElementById('attending-bar');
+  const attendingList = document.getElementById('attending-bar-list');
+  if (attendingBar && attendingList) {
+    const otherAttendingFolios = (AppState.attendingFolios || []).filter(f => f !== activeFolio);
+    const otherAttendingApps = otherAttendingFolios.map(folio => {
+      return apps.find(app => app.FOLIO_CITA === folio);
+    }).filter(Boolean);
+
+    if (otherAttendingApps.length > 0) {
+      attendingList.innerHTML = '';
+      otherAttendingApps.forEach(app => {
+        const badge = document.createElement('div');
+        badge.className = 'attending-badge';
+        badge.innerHTML = `
+          <span class="attending-badge-dot"></span>
+          <span>${app.HORA_CITA} - ${toTitleCase(app.NOMBRE)} (${toTitleCase(app.MODELO)})</span>
+        `;
+        attendingList.appendChild(badge);
+      });
+      attendingBar.style.display = 'flex';
+    } else {
+      attendingBar.style.display = 'none';
+      attendingList.innerHTML = '';
+    }
+  }
+
+  // Determinar citas próximas (excluyendo la activa, en atención, terminadas o no asistidas)
+  const upcomingApps = apps.filter(app => {
+    if (app.FOLIO_CITA === activeFolio) return false;
+    if (AppState.attendingFolios && AppState.attendingFolios.includes(app.FOLIO_CITA)) return false;
+    if (AppState.completedFolios && AppState.completedFolios.includes(app.FOLIO_CITA)) return false;
+    if (AppState.noShowFolios && AppState.noShowFolios.includes(app.FOLIO_CITA)) return false;
+    return true;
+  });
 
   const containerHeight = listContainer.clientHeight || 400;
   const itemHeight = 220;  // altura estimada por tarjeta grande (incluyendo gap)
@@ -205,7 +364,7 @@ function renderQueuePage(upcomingApps, maxItemsToShow, page, stepSize, listConta
         </div>
       </div>
       <div class="card-queue-right">
-        <div class="card-queue-agency">Nissauto</div>
+        <div class="card-queue-agency">${formatAgencia(app.AGENCIA)}</div>
         <div class="card-queue-vehicle">${toTitleCase(app.MODELO)} ${app.ANO}</div>
       </div>
     `;
