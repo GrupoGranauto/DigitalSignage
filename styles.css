@@ -48,14 +48,15 @@ html, body {
    ────────────────────────────────────────────────────────────────────────────── */
 
 .hero-zone {
+  position: relative; /* Para posicionamiento absoluto del reloj */
   flex: 0 0 auto;
   background: var(--nissan-red);
-  padding: 24px 36px 30px 36px;
+  padding: 16px 36px 20px 36px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   z-index: 10;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 6px; /* Reducido para eliminar el espacio amarillo */
   border-bottom: 4px solid var(--dark-red);
 }
 
@@ -63,13 +64,14 @@ html, body {
 .hero-topbar {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .hero-label {
   display: flex;
   align-items: center;
   gap: 10px;
+  margin-top: 0.5rem; /* Alineación visual con la primera línea del logo */
 }
 
 .hero-dot {
@@ -93,21 +95,30 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 2px;
+  gap: 0.2rem;
 }
 
 .nissan-logo {
-  height: 28px;
+  height: 2.8rem;
   width: auto;
   object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.2));
+  transition: transform 0.3s ease;
+}
+
+.nissan-logo:hover {
+  transform: scale(1.05);
 }
 
 .hero-clock {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: rgba(254, 255, 255, 0.85);
+  position: absolute;
+  bottom: 20px;
+  right: 36px;
+  font-size: 0.95rem; /* Más visible en la parte inferior */
+  font-weight: 600;
+  color: rgba(254, 255, 255, 0.9);
   font-variant-numeric: tabular-nums;
-  margin-top: 2px;
+  letter-spacing: 0.5px;
 }
 
 /* Cita Activa Principal */
@@ -115,6 +126,7 @@ html, body {
   display: flex;
   align-items: center;
   gap: 28px;
+  padding-right: 120px; /* Reservar espacio para el reloj en la esquina derecha */
 }
 
 .hero-time-box {
@@ -161,6 +173,18 @@ html, body {
   flex-wrap: wrap;
 }
 
+.hero-agency-badge {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: var(--text-white);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-weight: 800;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .hero-model-badge {
   background-color: var(--text-white);
   color: var(--nissan-red);
@@ -175,6 +199,16 @@ html, body {
   font-size: 1.1rem;
   font-weight: 500;
   color: rgba(255,255,255,0.9);
+}
+
+.hero-advisor {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-white);
+  background-color: rgba(0, 0, 0, 0.25);
+  padding: 4px 12px;
+  border-radius: 4px;
+  text-transform: uppercase;
 }
 
 /* ──────────────────────────────────────────────────────────────────────────────
@@ -384,25 +418,91 @@ html, body {
    ────────────────────────────────────────────────────────────────────────────── */
 
 @media (max-width: 900px) {
-  .header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-    padding: 1.5rem 1rem;
-  }
-
   .hero-zone {
+    position: relative;
     flex-direction: column;
     text-align: left;
-    align-items: flex-start;
-    gap: 1.5rem;
-    padding: 2rem 1.5rem;
+    align-items: stretch;
+    gap: 12px;
+    padding: 16px 20px 20px 20px;
+  }
+
+  .hero-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+  }
+
+  .hero-label {
+    margin-top: 0;
+  }
+
+  .nissan-logo {
+    height: 1.4rem;
+  }
+
+  .hero-brand {
+    gap: 0.1rem;
+  }
+
+  .hero-clock {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    font-size: 0.85rem;
   }
 
   .hero-active {
     flex-direction: column;
     align-items: flex-start;
-    gap: 1rem;
+    gap: 8px;
+    margin-top: 0;
+    padding-right: 0;
+  }
+
+  .hero-time-box {
+    padding: 8px 16px;
+    min-width: 120px;
+    border-radius: 6px;
+  }
+
+  .hero-time {
+    font-size: 2.6rem;
+  }
+
+  .hero-info {
+    width: 100%;
+    gap: 6px;
+    padding-right: 100px; /* Reservar espacio para el reloj en móviles */
+  }
+
+  .hero-name {
+    font-size: 1.6rem;
+    line-height: 1.2;
+  }
+
+  .hero-vehicle {
+    gap: 0.4rem;
+  }
+
+  .hero-agency-badge {
+    font-size: 0.85rem;
+    padding: 3px 8px;
+  }
+
+  .hero-model-badge {
+    font-size: 0.85rem;
+    padding: 3px 8px;
+  }
+
+  .hero-year {
+    font-size: 0.95rem;
+  }
+
+  .hero-advisor {
+    font-size: 0.85rem;
+    padding: 3px 8px;
   }
 
   .hero-details, .hero-info {
@@ -414,18 +514,33 @@ html, body {
   }
 
   .queue-zone {
-    padding: 1.5rem 1rem;
+    padding: 16px 16px;
+    gap: 12px;
   }
 
   .card-queue-item {
     flex-direction: column;
     align-items: flex-start;
-    gap: 1rem;
-    padding: 1.2rem;
+    gap: 0.8rem;
+    padding: 1rem;
   }
 
   .card-queue-left {
     width: 100%;
+    gap: 12px;
+  }
+
+  .card-queue-time-box {
+    padding: 0.4rem 0.8rem;
+    min-width: 70px;
+  }
+
+  .card-queue-time {
+    font-size: 1.3rem;
+  }
+
+  .card-queue-name {
+    font-size: 1.15rem;
   }
 
   .card-queue-right {
@@ -433,7 +548,7 @@ html, body {
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    padding-top: 0.8rem;
+    padding-top: 0.6rem;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
   }
 
@@ -443,5 +558,6 @@ html, body {
 
   .card-queue-vehicle {
     order: 1;
+    font-size: 1rem;
   }
 }

@@ -68,21 +68,9 @@ function loadData() {
         showState('empty');
         return;
       }
-      // Filtrar solo modelos Nissan
-      const nissanModels = ['nissan', 'versa', 'sentra', 'altima', 'maxima', 'march', 'kicks', 'xtrail', 'x-trail', 'pathfinder', 'armada', 'np300', 'frontier', 'titan', 'leaf', 'v-drive', 'urvan', 'cabstar', 'tiida', 'tsuru', 'platina', 'note', 'micra', 'datsun', 'z', 'gt-r', 'murano', 'rogue'];
-      const filteredData = data.filter(a => {
-        const m = (a.MODELO || '').toLowerCase();
-        // Use word boundaries to prevent 'z' matching 'Mazda', 'Suzuki', etc.
-        return nissanModels.some(n => new RegExp('\\b' + n + '\\b', 'i').test(m)) || m.trim() === ''; 
-      });
-
-      if (!filteredData.length) {
-        showState('empty');
-        return;
-      }
 
       // Ordenar por hora
-      AppState.appointments = [...filteredData].sort((a, b) => a.HORA_CITA.localeCompare(b.HORA_CITA));
+      AppState.appointments = [...data].sort((a, b) => a.HORA_CITA.localeCompare(b.HORA_CITA));
       showState('content');
       updateActiveIndex();
       renderLayout();
@@ -95,12 +83,18 @@ function loadData() {
 
 function updateActiveIndex() {
   const now = hhmm();
-  // Encontrar la primera cita cuya hora es mayor o igual a la actual
-  const idx = AppState.appointments.findIndex(a => a.HORA_CITA >= now);
+  // Encontrar la última cita cuya hora es menor o igual a la actual (la última que ya inició)
+  let idx = -1;
+  for (let i = AppState.appointments.length - 1; i >= 0; i--) {
+    if (AppState.appointments[i].HORA_CITA <= now) {
+      idx = i;
+      break;
+    }
+  }
   
   if (idx === -1) {
-    // Si ya pasaron todas, la activa es la última de la lista
-    AppState.activeIndex = AppState.appointments.length - 1;
+    // Si ninguna cita ha empezado aún (ej. temprano en la mañana), la activa es la primera
+    AppState.activeIndex = 0;
   } else {
     AppState.activeIndex = idx;
   }
@@ -127,6 +121,11 @@ function renderLayout() {
   document.getElementById('hero-name').textContent = activeApp.NOMBRE;
   document.getElementById('hero-model-badge').textContent = activeApp.MODELO;
   document.getElementById('hero-year').textContent = activeApp.ANO ? `Modelo ${activeApp.ANO}` : '';
+  
+  const advisorEl = document.getElementById('hero-advisor');
+  if (advisorEl) {
+    advisorEl.textContent = activeApp.ASESOR_SERVICIO ? `Asesor: ${activeApp.ASESOR_SERVICIO}` : '';
+  }
 
   // Determinar citas próximas
   const upcomingApps = apps.slice(activeIdx + 1);
