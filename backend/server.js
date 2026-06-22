@@ -10,7 +10,10 @@ require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 const http   = require('http');
 const fs     = require('fs');
 const path   = require('path');
+const crypto = require('crypto');
+const https  = require('https');
 const { BigQuery } = require('@google-cloud/bigquery');
+const nodemailer = require('nodemailer');
 
 // ──────────────────────────────────────────────────────────────────────────────
 // CONFIGURACIÓN (desde .env)
@@ -22,6 +25,214 @@ const BQ_TABLE     = process.env.BQ_TABLE || 'base-maestra-gn.Respaldo.tab_respa
 const KEY_FILE     = path.join(__dirname, '../service-account.json');
 const FRONTEND_DIR = path.join(__dirname, '../frontend');
 const STATE_FILE   = path.join(__dirname, 'state.json');
+const USERS_FILE   = path.join(__dirname, 'users.json');
+const SESSIONS_FILE = path.join(__dirname, 'sessions.json');
+
+// ──────────────────────────────────────────────────────────────────────────────
+// HELPERS DE PERSISTENCIA Y SEGURIDAD
+// ──────────────────────────────────────────────────────────────────────────────
+
+function loadJSON(filePath, defaultValue = []) {
+  try {
+    if (fs.existsSync(filePath)) {
+      return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    }
+  } catch (err) {
+    console.error(`[Persistencia] Error al leer ${filePath}:`, err.message);
+  }
+  return defaultValue;
+}
+
+function saveJSON(filePath, data) {
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+  } catch (err) {
+    console.error(`[Persistencia] Error al escribir ${filePath}:`, err.message);
+  }
+}
+
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.scryptSync(password, salt, 64).toString('hex');
+  return { salt, hash };
+}
+
+function verifyPassword(password, salt, hash) {
+  const checkHash = crypto.scryptSync(password, salt, 64).toString('hex');
+  return checkHash === hash;
+}
+
+function verifyGoogleToken(idToken) {
+  return new Promise((resolve, reject) => {
+    const url = `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`;
+    https.get(url, (res) => {
+      let data = '';
+      res.on('data', chunk => { data += chunk; });
+      res.on('end', () => {
+        try {
+          const payload = JSON.parse(data);
+          if (res.statusCode === 200) {
+            resolve(payload);
+          } else {
+            reject(new Error(payload.error_description || 'Invalid token'));
+          }
+        } catch (e) {
+          reject(e);
+        }
+      });
+    }).on('error', (err) => {
+      reject(err);
+    });
+  });
+}
+
+function parseCookies(req) {
+  const list = {};
+  const rc = req.headers.cookie;
+  if (rc) {
+    rc.split(';').forEach(cookie => {
+      const parts = cookie.split('=');
+      list[parts.shift().trim()] = decodeURI(parts.join('='));
+    });
+  }
+  return list;
+}
+
+function getAuthenticatedUser(req) {
+  const cookies = parseCookies(req);
+  const sessionId = cookies.session_id;
+  if (!sessionId) return null;
+
+  const sessions = loadJSON(SESSIONS_FILE, {});
+  const session = sessions[sessionId];
+  if (!session) return null;
+
+  if (Date.now() > session.expires) {
+    // Limpiar sesión expirada
+    delete sessions[sessionId];
+    saveJSON(SESSIONS_FILE, sessions);
+    return null;
+  }
+
+  const users = loadJSON(USERS_FILE, []);
+  const user = users.find(u => u.id === session.userId);
+  return user || null;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// SERVICIO DE CORREO (SMTP / Google Apps Script)
+// ──────────────────────────────────────────────────────────────────────────────
+
+const SMTP_USER = process.env.SMTP_USER || '';
+const SMTP_PASS = process.env.SMTP_PASS || '';
+const GOOGLE_SCRIPT_URL = process.env.GOOGLE_SCRIPT_URL || '';
+
+async function getTransporter() {
+  let hostIp = 'smtp.gmail.com';
+  try {
+    const dns = require('dns');
+    const ipList = await dns.promises.resolve4('smtp.gmail.com');
+    if (ipList && ipList.length > 0) {
+      hostIp = ipList[0] || 'smtp.gmail.com';
+      console.log(`📡 SMTP Resolved via IPv4 DNS: ${hostIp}`);
+    }
+  } catch (e) {
+    console.error('DNS IPv4 resolution failed, falling back to default hostname:', e.message);
+  }
+
+  return nodemailer.createTransport({
+    host: hostIp,
+    port: 587,
+    secure: false,
+    name: 'autoinsights.mx',
+    auth: {
+      user: SMTP_USER,
+      pass: SMTP_PASS
+    },
+    tls: {
+      servername: 'smtp.gmail.com'
+    },
+    connectionTimeout: 5000,
+    greetingTimeout: 5000,
+    socketTimeout: 10000
+  });
+}
+
+async function sendResetPasswordEmail(to, code) {
+  const subject = 'Código de recuperación de contraseña';
+  const html = `
+    <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 30px; border: 1px solid #eef2f6; border-radius: 20px; background-color: #ffffff; box-shadow: 0 10px 25px rgba(0,0,0,0.03);">
+        <div style="text-align: center; margin-bottom: 35px;">
+            <img src="https://satisfaccion.autoinsights.mx/AUTOINSIGHTS-LOGO-01.png" alt="AutoInsights" style="width: 100%; max-width: 320px; height: auto; object-fit: contain; display: block; margin: 0 auto;" />
+        </div>
+        <div style="border-top: 1px solid #f1f5f9; padding-top: 30px;">
+            <h3 style="color: #0f172a; font-size: 20px; font-weight: 700; margin-top: 0; margin-bottom: 15px; font-family: 'Segoe UI', system-ui, sans-serif;">Recuperación de Contraseña</h3>
+            <p style="font-size: 15px; color: #475569; line-height: 1.6; margin-bottom: 20px;">Hola,</p>
+            <p style="font-size: 15px; color: #475569; line-height: 1.6; margin-bottom: 30px;">Hemos recibido una solicitud para restablecer la contraseña de tu cuenta. Utiliza el siguiente código único de verificación para completar el proceso:</p>
+            
+            <div style="text-align: center; margin: 35px 0;">
+                <span style="display: inline-block; background-color: #f8fafc; color: #c11030; font-size: 38px; font-weight: 800; letter-spacing: 8px; padding: 18px 36px; border-radius: 14px; border: 1px dashed #cbd5e1; font-family: monospace;">${code}</span>
+            </div>
+
+            <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 6px; margin-top: 30px;">
+                <p style="font-size: 13px; color: #b45309; line-height: 1.6; margin: 0;">
+                    <strong>Importante:</strong> Este código es de uso único y expirará automáticamente en 10 minutos. Si no has solicitado este cambio, por favor ignora este correo de forma segura.
+                </p>
+            </div>
+        </div>
+        <div style="border-top: 1px solid #f1f5f9; margin-top: 40px; padding-top: 20px; text-align: center;">
+            <p style="font-size: 12px; color: #94a3b8; margin: 0;">Este es un mensaje automático, por favor no respondas a este correo.</p>
+            <p style="font-size: 11px; color: #cbd5e1; margin-top: 8px;">© ${new Date().getFullYear()} AutoInsights. Todos los derechos reservados.</p>
+        </div>
+    </div>
+  `;
+
+  if (GOOGLE_SCRIPT_URL) {
+    try {
+      const response = await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to, subject, html })
+      });
+      const resText = await response.text();
+      let resData = {};
+      try {
+        resData = JSON.parse(resText);
+      } catch (e) {
+        throw new Error("Invalid response from Apps Script: " + resText.slice(0, 200));
+      }
+
+      if (resData.success) {
+        console.log("📧 Correo de restablecimiento enviado via Google Apps Script a: " + to);
+        return { success: true, info: resData };
+      } else {
+        console.warn("⚠️ Google Apps Script falló al enviar:", resData.error);
+      }
+    } catch (err) {
+      console.error("Error enviando correo via Google Apps Script:", err.message);
+    }
+  }
+
+  if (SMTP_USER && SMTP_PASS) {
+    try {
+      const transporter = await getTransporter();
+      const info = await transporter.sendMail({
+        from: '"AutoInsights Notificaciones" <' + SMTP_USER + '>',
+        to,
+        subject,
+        html
+      });
+      console.log("Correo de restablecimiento enviado a: " + to);
+      return { success: true, info };
+    } catch (error) {
+      console.error("Error enviando correo de restablecimiento via SMTP:", error.message);
+      return { success: false, error: error.message };
+    }
+  } else {
+    console.warn("⚠️ No se configuró SMTP ni GOOGLE_SCRIPT_URL. El correo no se enviará de forma real.");
+    return { success: true, mock: true };
+  }
+}
 
 // Cargar estado
 let activeState = { date: '', agencies: {} };
@@ -309,9 +520,509 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // ──────────────────────────────────────────────────────────────────────────────
+  // ENDPOINTS DE AUTENTICACIÓN
+  // ──────────────────────────────────────────────────────────────────────────────
+
+  if (pathname === '/api/auth/config' && req.method === 'GET') {
+    setCorsHeaders(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ googleClientId: process.env.GOOGLE_CLIENT_ID || '' }));
+    return;
+  }
+
+  if (pathname === '/api/auth/register' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk.toString(); });
+    req.on('end', () => {
+      try {
+        const { name, email, password, picture } = JSON.parse(body);
+        if (!name || !email || !password) {
+          setCorsHeaders(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Todos los campos son obligatorios' }));
+          return;
+        }
+
+        const users = loadJSON(USERS_FILE, []);
+        const emailLower = email.trim().toLowerCase();
+        if (users.find(u => u.email.toLowerCase() === emailLower)) {
+          setCorsHeaders(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'El correo electrónico ya está registrado' }));
+          return;
+        }
+
+        const { salt, hash } = hashPassword(password);
+        const isFirst = users.length === 0;
+        const isInitialAdmin = process.env.INITIAL_ADMIN_EMAIL && (emailLower === process.env.INITIAL_ADMIN_EMAIL.trim().toLowerCase());
+        const shouldBeAdmin = isFirst || isInitialAdmin;
+
+        const newUser = {
+          id: crypto.randomUUID(),
+          name: name.trim(),
+          email: emailLower,
+          salt: salt,
+          passwordHash: hash,
+          picture: picture || 'images/FotoPerfil.png',
+          role: shouldBeAdmin ? 'admin' : null,
+          agency: null,
+          status: shouldBeAdmin ? 'approved' : 'pending',
+          method: 'normal',
+          createdAt: new Date().toISOString()
+        };
+
+        users.push(newUser);
+        saveJSON(USERS_FILE, users);
+
+        setCorsHeaders(201, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          success: true,
+          message: shouldBeAdmin
+            ? 'Usuario administrador registrado y aprobado automáticamente.'
+            : 'Usuario registrado con éxito. Su cuenta está pendiente de aprobación.'
+        }));
+      } catch (e) {
+        setCorsHeaders(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Error del servidor: ' + e.message }));
+      }
+    });
+    return;
+  }
+
+  if (pathname === '/api/auth/login' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk.toString(); });
+    req.on('end', () => {
+      try {
+        const { email, password } = JSON.parse(body);
+        if (!email || !password) {
+          setCorsHeaders(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Correo y contraseña obligatorios' }));
+          return;
+        }
+
+        const users = loadJSON(USERS_FILE, []);
+        const emailLower = email.trim().toLowerCase();
+        const user = users.find(u => u.email.toLowerCase() === emailLower);
+
+        if (!user) {
+          setCorsHeaders(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Usuario no encontrado' }));
+          return;
+        }
+
+        if (!user.passwordHash || !user.salt) {
+          setCorsHeaders(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Este usuario se registró con Google. Usa "Continuar con Google".' }));
+          return;
+        }
+
+        if (!verifyPassword(password, user.salt, user.passwordHash)) {
+          setCorsHeaders(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Credenciales incorrectas' }));
+          return;
+        }
+
+        if (user.status === 'pending') {
+          setCorsHeaders(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Tu cuenta está pendiente de aprobación por el administrador.' }));
+          return;
+        }
+
+        if (user.status === 'rejected') {
+          setCorsHeaders(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Tu cuenta ha sido rechazada.' }));
+          return;
+        }
+
+        const sessionId = crypto.randomBytes(32).toString('hex');
+        const sessions = loadJSON(SESSIONS_FILE, {});
+        sessions[sessionId] = {
+          userId: user.id,
+          expires: Date.now() + 24 * 60 * 60 * 1000
+        };
+        saveJSON(SESSIONS_FILE, sessions);
+
+        setCorsHeaders(200, {
+          'Content-Type': 'application/json',
+          'Set-Cookie': `session_id=${sessionId}; HttpOnly; Path=/; Max-Age=86400; SameSite=Lax`
+        });
+        res.end(JSON.stringify({
+          success: true,
+          user: { id: user.id, name: user.name, picture: user.picture, role: user.role, agency: user.agency }
+        }));
+      } catch (e) {
+        setCorsHeaders(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Error del servidor: ' + e.message }));
+      }
+    });
+    return;
+  }
+
+  if (pathname === '/api/auth/google' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk.toString(); });
+    req.on('end', async () => {
+      try {
+        const { credential } = JSON.parse(body);
+        if (!credential) {
+          setCorsHeaders(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'ID token de Google requerido' }));
+          return;
+        }
+
+        let payload;
+        try {
+          payload = await verifyGoogleToken(credential);
+        } catch (verifyErr) {
+          setCorsHeaders(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Token de Google inválido: ' + verifyErr.message }));
+          return;
+        }
+
+        const clientId = process.env.GOOGLE_CLIENT_ID;
+        if (clientId && payload.aud !== clientId) {
+          setCorsHeaders(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'El client ID del token no coincide' }));
+          return;
+        }
+
+        const emailLower = payload.email.toLowerCase();
+        const users = loadJSON(USERS_FILE, []);
+        let user = users.find(u => u.email.toLowerCase() === emailLower);
+
+        const isFirst = users.length === 0;
+        const isInitialAdmin = process.env.INITIAL_ADMIN_EMAIL && (emailLower === process.env.INITIAL_ADMIN_EMAIL.trim().toLowerCase());
+        const shouldBeAdmin = isFirst || isInitialAdmin;
+
+        if (!user) {
+          user = {
+            id: crypto.randomUUID(),
+            name: payload.name || '',
+            email: emailLower,
+            salt: '',
+            passwordHash: '',
+            picture: payload.picture || 'images/FotoPerfil.png',
+            role: shouldBeAdmin ? 'admin' : null,
+            agency: null,
+            status: shouldBeAdmin ? 'approved' : 'pending',
+            method: 'google',
+            createdAt: new Date().toISOString()
+          };
+          users.push(user);
+          saveJSON(USERS_FILE, users);
+        } else if (user.method !== 'google') {
+          user.method = 'google';
+          if (payload.picture && !user.picture) {
+            user.picture = payload.picture;
+          }
+          saveJSON(USERS_FILE, users);
+        }
+
+        if (user.status === 'pending') {
+          setCorsHeaders(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Tu cuenta está pendiente de aprobación por el administrador.' }));
+          return;
+        }
+
+        if (user.status === 'rejected') {
+          setCorsHeaders(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Tu cuenta ha sido rechazada.' }));
+          return;
+        }
+
+        const sessionId = crypto.randomBytes(32).toString('hex');
+        const sessions = loadJSON(SESSIONS_FILE, {});
+        sessions[sessionId] = {
+          userId: user.id,
+          expires: Date.now() + 24 * 60 * 60 * 1000
+        };
+        saveJSON(SESSIONS_FILE, sessions);
+
+        setCorsHeaders(200, {
+          'Content-Type': 'application/json',
+          'Set-Cookie': `session_id=${sessionId}; HttpOnly; Path=/; Max-Age=86400; SameSite=Lax`
+        });
+        res.end(JSON.stringify({
+          success: true,
+          user: { id: user.id, name: user.name, picture: user.picture, role: user.role, agency: user.agency }
+        }));
+      } catch (e) {
+        setCorsHeaders(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Error del servidor: ' + e.message }));
+      }
+    });
+    return;
+  }
+
+  if (pathname === '/api/auth/forgot-password' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk.toString(); });
+    req.on('end', async () => {
+      try {
+        const { email } = JSON.parse(body);
+        if (!email) {
+          setCorsHeaders(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'El correo electrónico es obligatorio' }));
+          return;
+        }
+
+        const users = loadJSON(USERS_FILE, []);
+        const emailLower = email.trim().toLowerCase();
+        const userIndex = users.findIndex(u => u.email.toLowerCase() === emailLower);
+
+        if (userIndex === -1) {
+          setCorsHeaders(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Usuario no encontrado' }));
+          return;
+        }
+
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        users[userIndex].resetToken = code;
+        users[userIndex].resetTokenExpires = Date.now() + 10 * 60 * 1000; // 10 minutos
+        saveJSON(USERS_FILE, users);
+
+        // Enviar el correo en segundo plano
+        sendResetPasswordEmail(users[userIndex].email, code).catch(err => {
+          console.error('❌ Error enviando correo de restablecimiento:', err.message);
+        });
+
+        setCorsHeaders(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, message: 'Código de verificación enviado con éxito.' }));
+      } catch (e) {
+        setCorsHeaders(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Error del servidor: ' + e.message }));
+      }
+    });
+    return;
+  }
+
+  if (pathname === '/api/auth/reset-password' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk.toString(); });
+    req.on('end', () => {
+      try {
+        const { email, token, password } = JSON.parse(body);
+        if (!email || !token || !password) {
+          setCorsHeaders(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Todos los campos son obligatorios' }));
+          return;
+        }
+
+        const users = loadJSON(USERS_FILE, []);
+        const emailLower = email.trim().toLowerCase();
+        const userIndex = users.findIndex(u => u.email.toLowerCase() === emailLower);
+
+        if (userIndex === -1) {
+          setCorsHeaders(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Usuario no encontrado' }));
+          return;
+        }
+
+        const user = users[userIndex];
+        if (!user.resetToken || user.resetToken !== token || !user.resetTokenExpires || user.resetTokenExpires < Date.now()) {
+          setCorsHeaders(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Código inválido, expirado o ya utilizado' }));
+          return;
+        }
+
+        // Generar nueva contraseña cifrada
+        const { salt, hash } = hashPassword(password);
+        users[userIndex].salt = salt;
+        users[userIndex].passwordHash = hash;
+        users[userIndex].resetToken = null;
+        users[userIndex].resetTokenExpires = null;
+        users[userIndex].method = 'normal'; // Asegurar que pueda entrar con método normal si antes era otro
+        saveJSON(USERS_FILE, users);
+
+        setCorsHeaders(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, message: 'Contraseña restablecida correctamente. Ya puedes iniciar sesión.' }));
+      } catch (e) {
+        setCorsHeaders(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Error del servidor: ' + e.message }));
+      }
+    });
+    return;
+  }
+
+  if (pathname === '/api/auth/me' && req.method === 'GET') {
+    const user = getAuthenticatedUser(req);
+    if (!user) {
+      setCorsHeaders(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'No autenticado' }));
+      return;
+    }
+    setCorsHeaders(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      user: { id: user.id, name: user.name, email: user.email, picture: user.picture, role: user.role, agency: user.agency }
+    }));
+    return;
+  }
+
+  if (pathname === '/api/auth/logout' && req.method === 'POST') {
+    const cookies = parseCookies(req);
+    const sessionId = cookies.session_id;
+    if (sessionId) {
+      const sessions = loadJSON(SESSIONS_FILE, {});
+      delete sessions[sessionId];
+      saveJSON(SESSIONS_FILE, sessions);
+    }
+    setCorsHeaders(200, {
+      'Content-Type': 'application/json',
+      'Set-Cookie': 'session_id=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax'
+    });
+    res.end(JSON.stringify({ success: true }));
+    return;
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // ENDPOINTS DE ADMINISTRACIÓN (SOLO ADMIN)
+  // ──────────────────────────────────────────────────────────────────────────────
+
+  if (pathname === '/api/admin/users' && req.method === 'GET') {
+    const user = getAuthenticatedUser(req);
+    if (!user || user.role !== 'admin') {
+      setCorsHeaders(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Acceso denegado' }));
+      return;
+    }
+    const users = loadJSON(USERS_FILE, []);
+    const cleanUsers = users.map(u => ({
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      picture: u.picture,
+      role: u.role,
+      agency: u.agency,
+      status: u.status,
+      method: u.method,
+      createdAt: u.createdAt
+    }));
+    setCorsHeaders(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(cleanUsers));
+    return;
+  }
+
+  if (pathname === '/api/admin/approve' && req.method === 'POST') {
+    const currentUser = getAuthenticatedUser(req);
+    if (!currentUser || currentUser.role !== 'admin') {
+      setCorsHeaders(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Acceso denegado' }));
+      return;
+    }
+
+    let body = '';
+    req.on('data', chunk => { body += chunk.toString(); });
+    req.on('end', () => {
+      try {
+        const { userId, role, agency } = JSON.parse(body);
+        if (!userId || !role) {
+          setCorsHeaders(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'ID de usuario y rol requeridos' }));
+          return;
+        }
+
+        if (role !== 'admin' && role !== 'hostess') {
+          setCorsHeaders(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Rol inválido. Debe ser admin o hostess' }));
+          return;
+        }
+
+        if (role === 'hostess' && !agency) {
+          setCorsHeaders(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'La agencia es requerida para el rol de hostess' }));
+          return;
+        }
+
+        const users = loadJSON(USERS_FILE, []);
+        const userIndex = users.findIndex(u => u.id === userId);
+        if (userIndex === -1) {
+          setCorsHeaders(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Usuario no encontrado' }));
+          return;
+        }
+
+        users[userIndex].role = role;
+        users[userIndex].agency = role === 'hostess' ? agency.trim().toUpperCase() : null;
+        users[userIndex].status = 'approved';
+        saveJSON(USERS_FILE, users);
+
+        setCorsHeaders(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, message: 'Usuario aprobado con éxito' }));
+      } catch (e) {
+        setCorsHeaders(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Error del servidor: ' + e.message }));
+      }
+    });
+    return;
+  }
+
+  if (pathname === '/api/admin/reject' && req.method === 'POST') {
+    const currentUser = getAuthenticatedUser(req);
+    if (!currentUser || currentUser.role !== 'admin') {
+      setCorsHeaders(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Acceso denegado' }));
+      return;
+    }
+
+    let body = '';
+    req.on('data', chunk => { body += chunk.toString(); });
+    req.on('end', () => {
+      try {
+        const { userId } = JSON.parse(body);
+        if (!userId) {
+          setCorsHeaders(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'ID de usuario requerido' }));
+          return;
+        }
+
+        if (userId === currentUser.id) {
+          setCorsHeaders(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'No puedes eliminarte a ti mismo' }));
+          return;
+        }
+
+        let users = loadJSON(USERS_FILE, []);
+        const userExists = users.some(u => u.id === userId);
+        if (!userExists) {
+          setCorsHeaders(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Usuario no encontrado' }));
+          return;
+        }
+
+        users = users.filter(u => u.id !== userId);
+        saveJSON(USERS_FILE, users);
+
+        setCorsHeaders(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, message: 'Usuario rechazado/eliminado con éxito' }));
+      } catch (e) {
+        setCorsHeaders(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Error del servidor: ' + e.message }));
+      }
+    });
+    return;
+  }
+
+  // ──────────────────────────────────────────────────────────────────────────────
+  // ENDPOINTS DE CITAS EXISTENTES (CON PROTECCIÓN DE ROLES)
+  // ──────────────────────────────────────────────────────────────────────────────
+
   if (pathname === '/api/citas-servicio' && req.method === 'GET') {
     try {
+      const authUser = getAuthenticatedUser(req);
       const agencia = parsedUrl.searchParams.get('agencia');
+
+      // Si es una hostess, solo puede ver la agencia asignada
+      if (authUser && authUser.role === 'hostess') {
+        const assignedAgency = authUser.agency.trim().toUpperCase();
+        if (agencia) {
+          const reqAgencyUpper = agencia.trim().toUpperCase();
+          if (reqAgencyUpper !== assignedAgency) {
+            setCorsHeaders(403, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: `Acceso denegado: solo puedes ver datos de la agencia ${authUser.agency}` }));
+            return;
+          }
+        }
+      }
+
       const data = await getCitasFiltered(agencia);
       setCorsHeaders(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' });
       res.end(JSON.stringify(data));
@@ -324,6 +1035,13 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (pathname === '/api/atender' && req.method === 'POST') {
+    const authUser = getAuthenticatedUser(req);
+    if (!authUser) {
+      setCorsHeaders(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'No autenticado' }));
+      return;
+    }
+
     let body = '';
     req.on('data', chunk => {
       body += chunk.toString();
@@ -337,6 +1055,16 @@ const server = http.createServer(async (req, res) => {
           setCorsHeaders(400, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'La agencia es requerida' }));
           return;
+        }
+
+        // Si es hostess, validar que sea su agencia asignada
+        if (authUser.role === 'hostess') {
+          const assignedAgency = authUser.agency.trim().toUpperCase();
+          if (agencia.trim().toUpperCase() !== assignedAgency) {
+            setCorsHeaders(403, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: `Acceso denegado: solo puedes realizar cambios en tu agencia asignada (${authUser.agency})` }));
+            return;
+          }
         }
 
         loadState();

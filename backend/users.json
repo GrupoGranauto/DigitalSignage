@@ -1,0 +1,30 @@
+[
+  {
+    "id": "1fb79964-295d-43d1-9e05-1fafabe991dd",
+    "name": "Admin",
+    "email": "admin@grupogranauto.com",
+    "salt": "97a93af43bc9f32cc833b0ef5f139b54",
+    "passwordHash": "569ea674060b21efcf63750fc9ffe81bd6278124c04cebd6bb2155992e94b8ba75c6fcef71976f4f47694cc3ae5d9e98ee8c893b4655f2d36a6af35589be1176",
+    "picture": "data:image/svg+xml;utf8,<svg viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"%23c3002f\"><circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M12 14c-6.1 0-8 4-8 4h16s-1.9-4-8-4z\"/></svg>",
+    "role": "admin",
+    "agency": null,
+    "status": "approved",
+    "method": "normal",
+    "createdAt": "2026-06-17T18:03:58.149Z",
+    "resetToken": null,
+    "resetTokenExpires": null
+  },
+  {
+    "id": "791b9410-b194-4849-ad8c-23ae50ecd9ae",
+    "name": "Miguel Borbon",
+    "email": "mborbon@grupogranauto.mx",
+    "salt": "8101a82c2f1c2bf9a8fa17db8881e59d",
+    "passwordHash": "9e5212225a747ccb01789b6587c2a0836789f11e8d28865cdbbf72d81d404e69a245d49db157fccf6ab5f4eb0743a7e3d5027b6be4ce61de50740ef1fc299b97",
+    "picture": "images/FotoPerfil.png",
+    "role": "hostess",
+    "agency": "NISSAUTO",
+    "status": "approved",
+    "method": "google",
+    "createdAt": "2026-06-19T20:00:48.505Z"
+  }
+]

@@ -5,87 +5,184 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Configuración de Pantallas - Citas de Servicio</title>
   <link rel="stylesheet" href="styles.css">
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <script src="auth-shield.js"></script>
   <style>
-    /* Estilos Premium específicos para el panel interactivo del Administrador */
+    /* Importar e imponer tipografía Inter en todo el panel */
+    * {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --nissan-red: #c3002f;
+      --dark-red: #a30d29;
+      --font: 'Inter', system-ui, -apple-system, sans-serif !important;
+    }
+
+    html {
+      height: 100% !important;
+      overflow-y: auto !important;
+      font-size: 16px !important;
+    }
+
     body {
-      overflow-y: auto;
-      background: radial-gradient(circle at top, #1a1e29 0%, #0c0e14 100%);
+      height: auto !important;
+      overflow-y: auto !important;
+      background: #f8fafc !important; /* fondo slate-50 */
+      color: #0f172a !important; /* slate-900 */
     }
 
     .container {
-      max-width: 1000px;
+      max-width: 1200px;
       margin: 0 auto;
-      padding: 32px 20px;
+      padding: 40px 24px;
     }
 
     .admin-header {
-      border-bottom: 2px solid rgba(255, 255, 255, 0.05);
-      padding-bottom: 20px;
-      margin-bottom: 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       text-align: center;
+      margin-bottom: 40px;
+      border-bottom: none;
+      padding-bottom: 0;
     }
 
     .admin-title {
-      font-size: 2rem;
+      font-size: 2.25rem;
       font-weight: 800;
-      color: var(--text-white);
-      letter-spacing: 0.5px;
+      color: #0f172a;
+      letter-spacing: -0.03em;
     }
 
     .admin-subtitle {
-      font-size: 1rem;
-      color: var(--text-muted);
-      margin-top: 6px;
+      font-size: 0.95rem;
+      color: #64748b;
+      margin-top: 8px;
+      font-weight: 400;
+    }
+
+    /* Pestañas estilo Segmented Control (Pill) */
+    .tabs-container {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      margin-top: 24px;
+    }
+
+    .admin-tabs {
+      display: inline-flex;
+      background: #f1f5f9; /* Slate 100 */
+      padding: 4px;
+      border-radius: 9999px;
+      gap: 4px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .admin-tab-btn {
+      background: transparent;
+      border: none !important;
+      color: #64748b;
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: none !important;
+      letter-spacing: 0;
+      cursor: pointer;
+      padding: 10px 24px;
+      border-radius: 9999px;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      outline: none;
+      box-shadow: none;
+    }
+
+    .admin-tab-btn:hover {
+      color: #0f172a;
+    }
+
+    .admin-tab-btn.active {
+      background: #ffffff;
+      color: #c3002f !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
     }
 
     /* Grid de Selección de Agencia */
     .section-title {
-      font-size: 1.2rem;
-      font-weight: 800;
-      color: var(--text-white);
-      margin-bottom: 18px;
-      letter-spacing: 1px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #64748b;
+      margin-bottom: 20px;
+      letter-spacing: 1.5px;
       text-transform: uppercase;
+      border-left: 3px solid #c3002f;
+      padding-left: 10px;
     }
 
     .grid-agencies {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
       gap: 16px;
       margin-bottom: 40px;
     }
 
     .admin-agency-card {
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 10px;
-      padding: 24px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 22px 16px;
       text-align: center;
       cursor: pointer;
-      transition: all 0.2s ease;
+      color: #334155;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 72px;
     }
 
-    .admin-agency-card:hover, .admin-agency-card.selected {
-      background: var(--nissan-red);
-      border-color: var(--nissan-red);
-      box-shadow: 0 8px 25px rgba(195, 0, 47, 0.3);
-      transform: translateY(-3px);
+    .admin-agency-card:hover {
+      border-color: #cbd5e1;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .admin-agency-card.selected {
+      background: #c3002f;
+      border-color: #c3002f;
+      color: #ffffff !important;
+      box-shadow: 0 8px 20px rgba(195, 0, 47, 0.2);
+      transform: translateY(-2px);
     }
 
     .admin-agency-card h3 {
-      font-size: 1.15rem;
+      font-size: 1.05rem;
       font-weight: 700;
-      color: var(--text-white);
+      margin: 0;
+      color: inherit;
     }
 
     /* Caja de Resultados y Embeds */
     .embed-generator-box {
-      background: var(--card-dark);
-      border-radius: 12px;
-      padding: 32px;
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-      display: none; /* Se activa al seleccionar una agencia */
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 36px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .embed-row {
@@ -96,9 +193,9 @@
     }
 
     .embed-row label {
-      font-size: 0.9rem;
-      font-weight: 800;
-      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #475569;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
@@ -110,93 +207,350 @@
 
     .embed-input {
       flex: 1;
-      background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: var(--text-white);
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      color: #334155;
       padding: 12px 16px;
-      border-radius: 6px;
-      font-family: monospace;
-      font-size: 0.95rem;
+      border-radius: 8px;
+      font-family: monospace !important;
+      font-size: 0.85rem;
       outline: none;
-      read-only: true;
+      transition: all 0.15s ease;
+    }
+
+    .embed-input:focus {
+      background-color: #ffffff;
+      border-color: #c3002f;
+      box-shadow: 0 0 0 3px rgba(195, 0, 47, 0.1);
     }
 
     .copy-btn {
-      background: var(--nissan-red);
+      background: #c3002f;
       border: none;
-      color: var(--text-white);
+      color: #ffffff;
       padding: 12px 24px;
-      border-radius: 6px;
-      font-family: var(--font);
-      font-weight: 800;
+      border-radius: 8px;
+      font-weight: 600;
       cursor: pointer;
       transition: all 0.2s ease;
       min-width: 140px;
     }
 
     .copy-btn:hover {
-      background: var(--dark-red);
-      transform: translateY(-1px);
+      background: #a30d29;
     }
 
     .copy-btn.success {
-      background: #2ecc71;
+      background: #10b981;
     }
 
     /* Vista Previa Iframe */
     .preview-container {
       margin-top: 32px;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      border-top: 1px solid #f1f5f9;
       padding-top: 24px;
     }
 
     .preview-iframe {
       width: 100%;
-      height: 450px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      background: #000;
+      height: 480px;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      background: #f8fafc;
       margin-top: 12px;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.02);
+    }
+
+    /* Perfil de Usuario Superior */
+    .user-profile-bar {
+      padding: 16px 32px !important;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
+    }
+
+    .user-profile-name {
+      font-size: 0.9rem !important;
+      font-weight: 700 !important;
+      color: #0f172a !important;
+    }
+
+    .user-profile-role {
+      font-size: 0.75rem !important;
+      color: #64748b !important;
+      font-weight: 500 !important;
+    }
+
+    .logout-btn {
+      padding: 8px 16px !important;
+      border-radius: 8px !important;
+      border-color: #e2e8f0 !important;
+      font-weight: 600 !important;
+      font-size: 0.8rem !important;
+    }
+
+    /* Estilos Premium para la Gestión de Usuarios */
+    .users-container {
+      margin-top: 10px;
+    }
+
+    .user-card {
+      background: #ffffff !important;
+      border: 1px solid #e2e8f0 !important;
+      border-radius: 12px !important;
+      padding: 24px !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02) !important;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    .user-card:hover {
+      border-color: #cbd5e1 !important;
+      transform: translateY(-2px) !important;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06) !important;
+    }
+
+    .user-card-name {
+      font-size: 1.05rem !important;
+      font-weight: 700 !important;
+      color: #0f172a !important;
+    }
+
+    .user-card-email {
+      font-size: 0.8rem !important;
+      color: #64748b !important;
+      margin-top: 2px;
+    }
+
+    .user-card-method {
+      font-size: 0.75rem !important;
+      color: #94a3b8 !important;
+      font-weight: 500 !important;
+      margin-top: 4px;
+    }
+
+    .user-role-select,
+    .user-agency-select {
+      background: #ffffff !important;
+      border: 1px solid #cbd5e1 !important;
+      color: #334155 !important;
+      padding: 8px 12px !important;
+      border-radius: 8px !important;
+      font-size: 0.85rem !important;
+      outline: none !important;
+      transition: all 0.15s ease !important;
+      max-width: 170px !important;
+    }
+
+    .user-role-select:focus,
+    .user-agency-select:focus {
+      border-color: #c3002f !important;
+      box-shadow: 0 0 0 3px rgba(195, 0, 47, 0.1) !important;
+    }
+
+    .user-btn {
+      padding: 10px 16px !important;
+      border-radius: 8px !important;
+      font-weight: 600 !important;
+      font-size: 0.85rem !important;
+      transition: all 0.2s ease !important;
+    }
+
+    .approve-btn {
+      background: #10b981 !important;
+      color: #ffffff !important;
+    }
+
+    .approve-btn:hover {
+      background: #059669 !important;
+      transform: translateY(-1px);
+    }
+
+    .reject-btn {
+      background: #ffffff !important;
+      border: 1px solid #cbd5e1 !important;
+      color: #475569 !important;
+    }
+
+    .reject-btn:hover {
+      background: #fef2f2 !important;
+      border-color: #fca5a5 !important;
+      color: #ef4444 !important;
+      transform: translateY(-1px);
+    }
+
+    .user-role-badge {
+      font-size: 0.7rem !important;
+      font-weight: 700 !important;
+      padding: 4px 10px !important;
+      border-radius: 6px !important;
+      letter-spacing: 0.5px !important;
+    }
+
+    .user-role-badge.admin {
+      background: rgba(195, 0, 47, 0.06) !important;
+      color: #c3002f !important;
+      border: 1px solid rgba(195, 0, 47, 0.15) !important;
+    }
+
+    .user-role-badge.hostess {
+      background: rgba(14, 165, 233, 0.06) !important;
+      color: #0284c7 !important;
+      border: 1px solid rgba(14, 165, 233, 0.15) !important;
+    }
+
+    .user-agency-badge {
+      font-size: 0.7rem !important;
+      font-weight: 700 !important;
+      padding: 4px 10px !important;
+      border-radius: 6px !important;
+      background: rgba(16, 185, 129, 0.06) !important;
+      color: #10b981 !important;
+      border: 1px solid rgba(16, 185, 129, 0.15) !important;
+    }
+
+    .self-badge {
+      font-size: 0.75rem !important;
+      font-weight: 600 !important;
+      color: #64748b !important;
+      background: #f1f5f9 !important;
+      padding: 6px 12px !important;
+      border-radius: 6px !important;
+    }
+
+    /* Sobreescribir estilos de la barra de usuario en móvil */
+    @media (max-width: 768px) {
+      .container {
+        padding: 24px 16px;
+      }
+      .admin-title {
+        font-size: 1.75rem;
+      }
+      .grid-agencies {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 12px;
+      }
+      .admin-agency-card {
+        min-height: 60px;
+        padding: 16px 12px;
+      }
+      .admin-agency-card h3 {
+        font-size: 0.95rem;
+      }
+      .embed-generator-box {
+        padding: 24px 16px;
+      }
+      .input-copy-group {
+        flex-direction: column;
+        gap: 8px;
+      }
+      .copy-btn {
+        width: 100%;
+        min-width: 0;
+      }
+      .user-profile-bar {
+        padding: 12px 16px !important;
+      }
+      .user-profile-avatar-container {
+        width: 32px;
+        height: 32px;
+      }
+      .user-profile-name {
+        font-size: 0.8rem !important;
+      }
+      .user-profile-role {
+        font-size: 0.65rem !important;
+      }
+      .logout-btn {
+        padding: 6px 12px !important;
+        font-size: 0.75rem !important;
+      }
     }
   </style>
 </head>
 <body>
 
+  <!-- Barra de Usuario Premium -->
+  <div class="user-profile-bar" id="user-profile-bar">
+    <div class="user-profile-info">
+      <div class="user-profile-avatar-container">
+        <img id="user-profile-avatar" src="" alt="Avatar" class="user-profile-avatar-img">
+      </div>
+      <div class="user-profile-meta">
+        <div class="user-profile-name" id="user-profile-name">Administrador</div>
+        <div class="user-profile-role" id="user-profile-role">Panel de Control</div>
+      </div>
+    </div>
+    <div class="user-profile-actions">
+      <button class="logout-btn" id="logout-button">
+        <svg viewBox="0 0 24 24" class="logout-icon"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+        <span>Cerrar Sesión</span>
+      </button>
+    </div>
+  </div>
+
   <main class="container">
     <div class="admin-header">
-      <h1 class="admin-title">Configuración de pantallas</h1>
-      <p class="admin-subtitle">Crea y previsualiza tableros de Digital Signage filtrados por agencia</p>
-    </div>
-
-    <!-- Sección 1: Selección de Agencia -->
-    <h2 class="section-title">1. Selecciona la Agencia</h2>
-    <div class="grid-agencies" id="admin-agency-grid">
-      <!-- Inyectado por JS -->
-    </div>
-
-    <!-- Sección 2: Enlace de Embed -->
-    <div class="embed-generator-box" id="generator-box">
-      <h2 class="section-title" style="margin-bottom: 24px;">2. Código de Enlace y Previsualización</h2>
+      <h1 class="admin-title">Panel de Administración</h1>
+      <p class="admin-subtitle">Configuración de pantallas y gestión de usuarios del sistema</p>
       
-      <div class="embed-row">
-        <label>Enlace de Visualización Directa</label>
-        <div class="input-copy-group">
-          <input type="text" class="embed-input" id="link-direct" readonly>
-          <button class="copy-btn" id="btn-copy-direct">Copiar Enlace</button>
+      <!-- Pestañas del Panel de Admin -->
+      <div class="tabs-container">
+        <div class="admin-tabs">
+          <button class="admin-tab-btn active" id="tab-screens-btn">Configurar Pantallas</button>
+          <button class="admin-tab-btn" id="tab-users-btn">Gestión de Usuarios</button>
         </div>
       </div>
+    </div>
 
-      <div class="embed-row">
-        <label>Código Iframe HTML (para otras aplicaciones)</label>
-        <div class="input-copy-group">
-          <input type="text" class="embed-input" id="link-iframe" readonly>
-          <button class="copy-btn" id="btn-copy-iframe">Copiar Iframe</button>
-        </div>
+    <!-- SECCIÓN 1: CONFIGURACIÓN DE PANTALLAS -->
+    <div id="section-screens">
+      <h2 class="section-title">1. Selecciona la Agencia</h2>
+      <div class="grid-agencies" id="admin-agency-grid">
+        <!-- Inyectado por JS -->
       </div>
 
-      <div class="preview-container">
-        <h3 class="section-title">Vista Previa en Tiempo Real</h3>
-        <iframe class="preview-iframe" id="preview-frame" src=""></iframe>
+      <div class="embed-generator-box" id="generator-box">
+        <h2 class="section-title" style="margin-bottom: 24px;">2. Código de Enlace y Previsualización</h2>
+        
+        <div class="embed-row">
+          <label>Enlace de Visualización Directa</label>
+          <div class="input-copy-group">
+            <input type="text" class="embed-input" id="link-direct" readonly>
+            <button class="copy-btn" id="btn-copy-direct">Copiar Enlace</button>
+          </div>
+        </div>
+
+        <div class="embed-row">
+          <label>Código Iframe HTML (para otras aplicaciones)</label>
+          <div class="input-copy-group">
+            <input type="text" class="embed-input" id="link-iframe" readonly>
+            <button class="copy-btn" id="btn-copy-iframe">Copiar Iframe</button>
+          </div>
+        </div>
+
+        <div class="preview-container">
+          <h3 class="section-title">Vista Previa en Tiempo Real</h3>
+          <iframe class="preview-iframe" id="preview-frame" src=""></iframe>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECCIÓN 2: GESTIÓN DE USUARIOS -->
+    <div id="section-users" style="display: none;">
+      <div class="users-container">
+        <!-- Usuarios Pendientes -->
+        <div class="users-block" style="margin-bottom: 40px;">
+          <h2 class="section-title" style="border-left: 4px solid var(--nissan-red); padding-left: 10px; margin-bottom: 20px;">Pendientes de Aprobación</h2>
+          <div class="users-list-grid" id="pending-users-list">
+            <!-- Inyectado por JS -->
+          </div>
+        </div>
+
+        <!-- Usuarios Aprobados -->
+        <div class="users-block">
+          <h2 class="section-title" style="border-left: 4px solid #10b981; padding-left: 10px; margin-bottom: 20px;">Usuarios del Sistema</h2>
+          <div class="users-list-grid" id="approved-users-list">
+            <!-- Inyectado por JS -->
+          </div>
+        </div>
       </div>
     </div>
   </main>

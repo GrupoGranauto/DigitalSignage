@@ -28,7 +28,45 @@ const AGENCIES = [
 
 let completedExpanded = false;
 
-document.addEventListener('DOMContentLoaded', initHostess);
+document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('auth-verified', (e) => {
+    const user = e.detail;
+    setupUserProfile(user);
+    initHostess(user);
+  });
+});
+
+function setupUserProfile(user) {
+  const avatarEl = document.getElementById('user-profile-avatar');
+  const nameEl = document.getElementById('user-profile-name');
+  const roleEl = document.getElementById('user-profile-role');
+  const logoutBtn = document.getElementById('logout-button');
+
+  if (avatarEl) {
+    avatarEl.src = user.picture || 'data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="%23cbd5e1"><circle cx="12" cy="8" r="4"/><path d="M12 14c-6.1 0-8 4-8 4h16s-1.9-4-8-4z"/></svg>';
+  }
+  if (nameEl) nameEl.textContent = user.name;
+  if (roleEl) {
+    roleEl.textContent = user.role === 'admin' ? 'Administrador' : `Hostess - ${user.agency}`;
+  }
+
+  if (logoutBtn) {
+    // Clonar para evitar doble binding
+    const newLogoutBtn = logoutBtn.cloneNode(true);
+    logoutBtn.parentNode.replaceChild(newLogoutBtn, logoutBtn);
+    
+    newLogoutBtn.addEventListener('click', () => {
+      fetch('/api/auth/logout', { method: 'POST' })
+        .then(() => {
+          window.location.replace('/login.html');
+        })
+        .catch(err => {
+          console.error('Error al cerrar sesión:', err);
+          window.location.replace('/login.html');
+        });
+    });
+  }
+}
 
 function showConfirmModal(title, message) {
   return new Promise((resolve) => {
@@ -66,7 +104,7 @@ function showConfirmModal(title, message) {
   });
 }
 
-function initHostess() {
+function initHostess(user) {
   document.getElementById('change-agency-button').addEventListener('click', clearAgency);
   
   const toggleBtn = document.getElementById('completed-accordion-toggle');
@@ -74,10 +112,22 @@ function initHostess() {
     toggleBtn.addEventListener('click', toggleCompletedSection);
   }
   
-  if (HostessState.selectedAgency) {
+  if (user.role === 'hostess') {
+    // Hostess va directo a su panel
+    HostessState.selectedAgency = user.agency;
+    const changeBtn = document.getElementById('change-agency-button');
+    if (changeBtn) changeBtn.style.display = 'none';
     showPanel();
   } else {
-    showSelectionGrid();
+    // Admin puede seleccionar
+    const changeBtn = document.getElementById('change-agency-button');
+    if (changeBtn) changeBtn.style.display = 'block';
+    
+    if (HostessState.selectedAgency) {
+      showPanel();
+    } else {
+      showSelectionGrid();
+    }
   }
 }
 
@@ -217,17 +267,25 @@ function renderAppointments() {
   const container = document.getElementById('appointments-list');
   const completedSection = document.getElementById('completed-section');
   const completedList = document.getElementById('completed-list');
+  
+  const activeSection = document.getElementById('active-appointments-section');
+  const activeList = document.getElementById('active-appointments-list');
 
-  container.innerHTML = '';
+  // Limpiar contenedores
+  if (container) container.innerHTML = '';
+  if (activeList) activeList.innerHTML = '';
   if (completedList) completedList.innerHTML = '';
 
   if (HostessState.appointments.length === 0) {
-    container.innerHTML = `
-      <div class="empty-state">
-        <h3>Sin citas para hoy</h3>
-        <p>No se encontraron citas de servicio programadas para esta agencia el día de hoy.</p>
-      </div>
-    `;
+    if (container) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <h3>Sin citas para hoy</h3>
+          <p>No se encontraron citas de servicio programadas para esta agencia el día de hoy.</p>
+        </div>
+      `;
+    }
+    if (activeSection) activeSection.style.display = 'none';
     if (completedSection) completedSection.style.display = 'none';
     return;
   }
@@ -237,7 +295,8 @@ function renderAppointments() {
   const noShowFolios = HostessState.noShowFolios || [];
   const activeFolio = HostessState.activeFolio;
 
-  let activeCount = 0;
+  let activeScreenCount = 0;
+  let pendingCount = 0;
   let completedCount = 0;
 
   HostessState.appointments.forEach(app => {
@@ -323,8 +382,14 @@ function renderAppointments() {
         <div class="hostess-card-details">
           <div class="hostess-card-name">${toTitleCase(app.NOMBRE)}</div>
           <div class="hostess-card-meta">
-            <div class="meta-row"><span class="meta-label">Vehículo:</span> <span class="vehicle">${toTitleCase(app.MODELO)} ${app.ANO || ''}</span></div>
-            <div class="meta-row"><span class="meta-label">Asesor:</span> <span class="advisor">${toTitleCase(app.ASESOR_SERVICIO) || 'Sin asignar'}</span></div>
+            <div class="meta-row">
+              <svg class="meta-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.27-3.82c.14-.4.52-.68.96-.68h9.54c.44 0 .82.28.96.68L19 11H5z"/></svg>
+              <span class="vehicle">${toTitleCase(app.MODELO)} ${app.ANO || ''}</span>
+            </div>
+            <div class="meta-row">
+              <svg class="meta-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+              <span class="advisor">${toTitleCase(app.ASESOR_SERVICIO) || 'Sin asignar'}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -336,11 +401,23 @@ function renderAppointments() {
         completedList.appendChild(card);
         completedCount++;
       }
+    } else if (isPrimary || isAttending) {
+      if (activeList) {
+        activeList.appendChild(card);
+        activeScreenCount++;
+      }
     } else {
-      container.appendChild(card);
-      activeCount++;
+      if (container) {
+        container.appendChild(card);
+        pendingCount++;
+      }
     }
   });
+
+  // Mostrar/Ocultar la sección activa
+  if (activeSection) {
+    activeSection.style.display = activeScreenCount > 0 ? 'block' : 'none';
+  }
 
   // Actualizar el contador del acordeón
   const countBadge = document.getElementById('completed-count-badge');
@@ -367,14 +444,23 @@ function renderAppointments() {
     }
   }
 
-  // Si no hay citas activas, mostrar empty state amigable en la lista principal
-  if (activeCount === 0) {
-    container.innerHTML = `
-      <div class="empty-state">
-        <h3>Todas las citas atendidas</h3>
-        <p>Has finalizado la atención de todas las citas de hoy.</p>
-      </div>
-    `;
+  // Si no hay citas pendientes en la fila de espera
+  if (pendingCount === 0 && container) {
+    if (activeScreenCount > 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <h3>No hay más citas en espera</h3>
+          <p>Todas las citas restantes están siendo atendidas o están en pantalla.</p>
+        </div>
+      `;
+    } else {
+      container.innerHTML = `
+        <div class="empty-state">
+          <h3>Todas las citas atendidas</h3>
+          <p>Has finalizado la atención de todas las citas de hoy.</p>
+        </div>
+      `;
+    }
   }
 }
 

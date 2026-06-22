@@ -16,13 +16,25 @@ function initApp() {
   const agencia = params.get('agencia');
 
   if (!agencia) {
-    // Si no hay agencia en la URL, mostrar el portal selector
-    document.documentElement.classList.add('portal-mode');
-    document.body.classList.add('portal-mode');
-    const portal = document.getElementById('portal-container');
-    if (portal) portal.style.display = 'flex';
-    const appContainer = document.getElementById('app-container');
-    if (appContainer) appContainer.style.display = 'none';
+    // Si no hay agencia en la URL, redirigir a login o a su panel correspondiente
+    fetch('/api/auth/me')
+      .then(res => {
+        if (!res.ok) throw new Error('No autenticado');
+        return res.json();
+      })
+      .then(data => {
+        const user = data.user;
+        if (user.role === 'admin') {
+          window.location.replace('/admin.html');
+        } else if (user.role === 'hostess') {
+          window.location.replace('/hostess.html');
+        } else {
+          window.location.replace('/login.html');
+        }
+      })
+      .catch(() => {
+        window.location.replace('/login.html');
+      });
     return;
   }
 

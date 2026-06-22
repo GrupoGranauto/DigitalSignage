@@ -1,11 +1,9 @@
 {
-  "date": "2026-06-16",
+  "date": "2026-06-22",
   "agencies": {
     "NISSAUTO": {
-      "primary": "218478",
-      "attending": [
-        "218478"
-      ],
+      "primary": null,
+      "attending": [],
       "completed": [],
       "noShows": []
     }

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Panel de Hostess - Citas de Servicio</title>
   <link rel="stylesheet" href="styles.css">
+  <script src="auth-shield.js"></script>
   <style>
     /* ══════════════════════════════════════════════════
        PANEL HOSTESS — DISEÑO CORPORATIVO (LIGERO / BLANCO)
@@ -26,20 +27,25 @@
 
     html {
       font-size: 16px; /* Base fija para legibilidad móvil */
+      height: auto !important;
+      overflow-y: auto !important;
     }
 
     body {
       background: var(--bg-light) !important;
       color: var(--text-main) !important;
-      overflow-y: auto;
+      height: auto !important;
+      overflow-y: auto !important;
       min-height: 100vh;
       font-family: var(--font);
     }
 
     .container {
-      max-width: 600px;
+      width: 100%;
+      max-width: 540px;
       margin: 0 auto;
-      padding: 20px 16px 40px;
+      padding: 16px 12px 30px;
+      box-sizing: border-box;
     }
 
     /* ── HEADER ─────────────────────────────────────── */
@@ -131,12 +137,18 @@
       border-radius: 12px;
       border: 1px solid var(--border-color);
       border-left: 5px solid #cbd5e1; /* Gris por defecto */
-      padding: 14px 16px;
+      padding: 16px;
       margin-bottom: 12px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      box-shadow: var(--shadow-sm);
+      gap: 14px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.03), 0 2px 4px -1px rgba(0,0,0,0.01);
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.15s ease;
+    }
+    .hostess-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.06), 0 4px 6px -2px rgba(0,0,0,0.02);
+      border-color: #cbd5e1;
     }
 
     /* Fila superior: tiempo + info del cliente */
@@ -150,13 +162,15 @@
       font-size: 1.25rem;
       font-weight: 900;
       color: var(--text-main);
-      background: #f1f5f9;
-      border-radius: 6px;
+      background: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
       padding: 6px 10px;
       text-align: center;
       min-width: 68px;
       flex-shrink: 0;
       letter-spacing: 0.5px;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
     }
 
     .hostess-card-details {
@@ -168,8 +182,8 @@
     }
 
     .hostess-card-name {
-      font-size: 1.05rem;
-      font-weight: 700;
+      font-size: 1.1rem;
+      font-weight: 800;
       color: var(--text-main);
       white-space: nowrap;
       overflow: hidden;
@@ -181,16 +195,24 @@
       color: var(--text-muted);
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 6px;
     }
 
     .hostess-card-meta .meta-row {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+
+    .meta-icon {
+      width: 15px;
+      height: 15px;
+      color: var(--text-muted);
+      opacity: 0.8;
+      flex-shrink: 0;
     }
 
     .meta-label {
@@ -228,36 +250,55 @@
 
     /* ── ESTADOS DE TARJETA ─────────────────────────── */
     .hostess-card.is-attending {
+      border-left-width: 6px;
       border-left-color: var(--nissan-red);
-      background: #fdf2f4; /* Tint sutil rojo Nissan */
+      background: linear-gradient(135deg, #ffffff 0%, #fff5f6 100%);
       border-color: #fca5a5;
+      box-shadow: 0 10px 15px -3px rgba(195,0,47,0.06), 0 4px 6px -2px rgba(195,0,47,0.02);
     }
-
+    .hostess-card.is-attending:hover {
+      box-shadow: 0 12px 20px -3px rgba(195,0,47,0.12), 0 6px 10px -2px rgba(195,0,47,0.04);
+    }
     .hostess-card.is-attending .hostess-card-time {
       background: var(--nissan-red);
       color: #ffffff;
+      border-color: var(--nissan-red);
+      box-shadow: none;
     }
 
     .hostess-card.is-attending-secondary {
+      border-left-width: 6px;
       border-left-color: #10b981; /* Verde esmeralda empresarial */
-      background: #f0fdf4; /* Tint sutil verde */
+      background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
       border-color: #a7f3d0;
+      box-shadow: 0 10px 15px -3px rgba(16,185,129,0.06);
     }
-
+    .hostess-card.is-attending-secondary:hover {
+      box-shadow: 0 12px 20px -3px rgba(16,185,129,0.1);
+    }
     .hostess-card.is-attending-secondary .hostess-card-time {
       background: #10b981;
       color: #ffffff;
+      border-color: #10b981;
+      box-shadow: none;
     }
 
     .hostess-card.is-completed {
+      border-left-width: 4px;
       border-left-color: #94a3b8;
-      background: #fafafa;
-      opacity: 0.6;
+      background: #f8fafc;
+      border-color: var(--border-color);
+      opacity: 0.75;
+      box-shadow: none;
     }
-
+    .hostess-card.is-completed:hover {
+      opacity: 0.95;
+      box-shadow: var(--shadow-sm);
+    }
     .hostess-card.is-completed .hostess-card-time {
       background: #e2e8f0;
       color: #64748b;
+      border-color: #cbd5e1;
     }
 
     /* ── BADGES DE ESTADO ───────────────────────────── */
@@ -343,11 +384,16 @@
       gap: 8px;
       box-shadow: 0 1px 2px rgba(195,0,47,0.15);
       -webkit-tap-highlight-color: transparent;
-      transition: background 0.15s ease;
+      transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+    }
+
+    .attend-btn:hover {
+      background: var(--nissan-red-hover);
+      box-shadow: 0 4px 10px rgba(195, 0, 47, 0.2);
     }
 
     .attend-btn:active {
-      background: var(--nissan-red-hover);
+      transform: scale(0.98);
     }
 
     .action-btn {
@@ -367,7 +413,17 @@
       -webkit-tap-highlight-color: transparent;
       min-width: 0;
       box-shadow: var(--shadow-sm);
-      transition: background 0.15s ease, border-color 0.15s ease;
+      transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.1s ease;
+    }
+
+    .action-btn:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+      color: var(--text-main);
+    }
+
+    .action-btn:active {
+      transform: scale(0.98);
     }
 
     .exit-btn {
@@ -375,8 +431,10 @@
       color: #ea580c;
     }
 
-    .exit-btn:active {
+    .exit-btn:hover {
       background: #fff7ed;
+      border-color: #f97316;
+      color: #ea580c;
     }
 
     .screen-btn {
@@ -384,8 +442,10 @@
       color: var(--nissan-red);
     }
 
-    .screen-btn:active {
+    .screen-btn:hover {
       background: #fdf2f4;
+      border-color: var(--nissan-red-hover);
+      color: var(--nissan-red);
     }
 
     .reattend-btn {
@@ -395,8 +455,9 @@
       padding: 8px 12px;
     }
 
-    .reattend-btn:active {
+    .reattend-btn:hover {
       background: #f1f5f9;
+      color: var(--text-main);
     }
 
     .noshow-btn, .queue-return-btn {
@@ -404,8 +465,9 @@
       color: var(--text-muted);
     }
 
-    .noshow-btn:active, .queue-return-btn:active {
+    .noshow-btn:hover, .queue-return-btn:hover {
       background: #f1f5f9;
+      color: var(--text-main);
     }
 
     /* ── ACORDEÓN DE COMPLETADOS ────────────────────── */
@@ -598,9 +660,181 @@
     .modal-btn.ok-btn:active {
       background: var(--nissan-red-hover);
     }
+
+    /* ── SECCIONES DE PANEL Y DISEÑO PREMIUM ──────────────── */
+    .active-section-container {
+      background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+      border: 1px dashed #cbd5e1;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.02), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+    }
+
+    .hostess-section-title {
+      font-size: 0.9rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      text-transform: uppercase;
+    }
+
+    .active-section-title {
+      color: var(--nissan-red);
+    }
+
+    .pending-section-title {
+      color: var(--text-muted);
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 8px;
+      margin-top: 10px;
+      margin-bottom: 20px;
+    }
+
+    .live-pulse-dot {
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      background-color: var(--nissan-red);
+      border-radius: 50%;
+      margin-right: 8px;
+      position: relative;
+      vertical-align: middle;
+    }
+
+    .live-pulse-dot::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 2px solid var(--nissan-red);
+      animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+      opacity: 0.8;
+    }
+
+    @keyframes pulse-ring {
+      0% {
+        transform: scale(0.5);
+        opacity: 0.8;
+      }
+      80%, 100% {
+        transform: scale(2.2);
+        opacity: 0;
+      }
+    }
+
+    /* Decoración de esquina para tarjetas activas */
+    .hostess-card.is-attending, .hostess-card.is-attending-secondary {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hostess-card.is-attending::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, transparent 50%, rgba(195,0,47,0.05) 50%);
+      border-top-right-radius: 11px;
+    }
+
+    .hostess-card.is-attending-secondary::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, transparent 50%, rgba(16,185,129,0.05) 50%);
+      border-top-right-radius: 11px;
+    }
+
+    /* Responsive grid styles for Tablet & PC */
+    @media (min-width: 576px) {
+      .container {
+        max-width: 720px;
+        padding: 20px 16px 40px;
+      }
+    }
+
+    @media (min-width: 768px) {
+      .container {
+        max-width: 960px;
+      }
+      
+      .selection-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      
+      #active-appointments-list,
+      #appointments-list,
+      #completed-list {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+        align-items: stretch;
+      }
+      
+      .hostess-card {
+        margin-bottom: 0;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .container {
+        max-width: 1350px;
+        padding: 32px 24px 60px;
+      }
+      
+      .selection-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+      }
+      
+      #active-appointments-list,
+      #appointments-list,
+      #completed-list {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+      }
+    }
+
+    @media (min-width: 1400px) {
+      .container {
+        max-width: 1600px;
+      }
+    }
   </style>
 </head>
 <body>
+
+  <!-- Barra de Usuario Premium -->
+  <div class="user-profile-bar" id="user-profile-bar">
+    <div class="user-profile-info">
+      <div class="user-profile-avatar-container">
+        <img id="user-profile-avatar" src="" alt="Avatar" class="user-profile-avatar-img">
+      </div>
+      <div class="user-profile-meta">
+        <div class="user-profile-name" id="user-profile-name">Cargando...</div>
+        <div class="user-profile-role" id="user-profile-role">Acceso Autorizado</div>
+      </div>
+    </div>
+    <div class="user-profile-actions">
+      <button class="logout-btn" id="logout-button">
+        <svg viewBox="0 0 24 24" class="logout-icon"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+        <span>Cerrar Sesión</span>
+      </button>
+    </div>
+  </div>
 
   <main class="container">
     <!-- Vista 1: Selector de Agencia -->
@@ -623,7 +857,25 @@
         <button class="change-agency-btn" id="change-agency-button">Cambiar Agencia</button>
       </div>
 
-      <!-- Sección de Citas Atendidas / No Asistidas (Acordeón Colapsable) -->
+      <!-- SECCIÓN ACTIVA: EN PANTALLA Y EN CURSO -->
+      <div id="active-appointments-section" class="active-section-container" style="display: none;">
+        <h2 class="hostess-section-title active-section-title">
+          <span class="live-pulse-dot"></span> En Pantalla y Atención
+        </h2>
+        <div id="active-appointments-list">
+          <!-- Inyectado por JS -->
+        </div>
+      </div>
+
+      <!-- SECCIÓN GENERAL: FILA DE ESPERA -->
+      <div id="pending-appointments-section">
+        <h2 class="hostess-section-title pending-section-title">Fila de Espera</h2>
+        <div id="appointments-list">
+          <!-- Inyectado por JS -->
+        </div>
+      </div>
+
+      <!-- Sección de Citas Atendidas / No Asistidas (Acordeón Colapsable al final) -->
       <div id="completed-section" class="completed-accordion" style="display: none;">
         <button type="button" class="completed-accordion-header" id="completed-accordion-toggle">
           <span class="accordion-title">Citas Atendidas / No Asistidas <span id="completed-count-badge">0</span></span>
@@ -634,10 +886,6 @@
             <!-- Inyectado por JS -->
           </div>
         </div>
-      </div>
-
-      <div id="appointments-list">
-        <!-- Inyectado por JS -->
       </div>
     </div>
   </main>
